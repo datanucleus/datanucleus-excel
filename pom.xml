@@ -29,9 +29,9 @@
     </licenses>
 
     <scm>
-        <connection>scm:svn:svn://andy_jefferson@svn.code.sf.net/p/datanucleus/code/platform/store.excel/trunk</connection>
-        <developerConnection>scm:svn:svn+ssh://andy_jefferson@svn.code.sf.net/p/datanucleus/code/platform/store.excel/trunk</developerConnection>
-        <url>http://svn.code.sf.net/p/datanucleus/code/platform/store.excel/trunk</url>
+        <connection>scm:git:git://github.com/datanucleus/datanucleus-excel.git</connection>
+        <url>scm:git:git://github.com/datanucleus/datanucleus-excel.git</url>
+        <developerConnection>scm:git:git://github.com/datanucleus/datanucleus-excel.git</developerConnection>
     </scm>
 
     <developers>
