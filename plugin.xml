@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+    <!-- STORE MANAGER -->
+   <extension point="org.datanucleus.store_manager">
+      <store-manager class-name="org.datanucleus.store.excel.XLSStoreManager" key="xls" url-key="xls"/>
+      <store-manager class-name="org.datanucleus.store.excel.XLSStoreManager" key="excel" url-key="excel"/>
+      <store-manager class-name="org.datanucleus.store.excel.OOXMLStoreManager" key="ooxml" url-key="ooxml"/>
+   </extension>
+
+    <!-- QUERY LANGUAGES -->
+    <extension point="org.datanucleus.store_query_query">
+        <query class-name="org.datanucleus.store.excel.query.JDOQLQuery" datastore="xls" name="JDOQL"/>
+        <query class-name="org.datanucleus.store.excel.query.JPQLQuery" datastore="xls" name="JPQL"/>
+        <query class-name="org.datanucleus.store.excel.query.JDOQLQuery" datastore="excel" name="JDOQL"/>
+        <query class-name="org.datanucleus.store.excel.query.JPQLQuery" datastore="excel" name="JPQL"/>
+        <query class-name="org.datanucleus.store.excel.query.JDOQLQuery" datastore="ooxml" name="JDOQL"/>
+        <query class-name="org.datanucleus.store.excel.query.JPQLQuery" datastore="ooxml" name="JPQL"/>
+    </extension>
+
+    <!-- CONNECTION FACTORY -->
+    <extension point="org.datanucleus.store_connectionfactory">
+        <connectionfactory name="xls" class-name="org.datanucleus.store.excel.ConnectionFactoryImpl" 
+            transactional="true" datastore="xls"/>
+        <connectionfactory name="excel" class-name="org.datanucleus.store.excel.ConnectionFactoryImpl" 
+            transactional="true" datastore="excel"/>
+        <connectionfactory name="ooxml" class-name="org.datanucleus.store.excel.ConnectionFactoryImpl"
+            transactional="true" datastore="ooxml"/>
+    </extension>
+
+    <!-- VALUE GENERATORS -->
+    <extension point="org.datanucleus.store_valuegenerator">
+        <valuegenerator name="increment" class-name="org.datanucleus.store.excel.valuegenerator.IncrementGenerator" datastore="excel"/>
+    </extension>
+</plugin>
