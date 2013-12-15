@@ -49,7 +49,7 @@
         <dependency>
             <groupId>org.datanucleus</groupId>
             <artifactId>datanucleus-core</artifactId>
-            <version>[${dn.code.version}, )</version>
+            <version>[${dn.core.version}, )</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
