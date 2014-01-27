@@ -547,7 +547,7 @@ public class FetchFieldManager extends AbstractFieldManager
                             if (keyCmd != null)
                             {
                                 // TODO handle Map<interface, ?>
-                                if (keyCmd.usesSingleFieldIdentityClass() && components[i].indexOf(':') > 0)
+                                if (keyCmd.usesSingleFieldIdentityClass() && keyStr.indexOf(':') > 0)
                                 {
                                     // Uses persistent identity
                                     key = IdentityUtils.getObjectFromPersistableIdentity(keyStr, keyCmd, ec);
@@ -581,7 +581,7 @@ public class FetchFieldManager extends AbstractFieldManager
                             if (valCmd != null)
                             {
                                 // TODO handle Collection<?, interface>
-                                if (valCmd.usesSingleFieldIdentityClass() && components[i].indexOf(':') > 0)
+                                if (valCmd.usesSingleFieldIdentityClass() && valStr.indexOf(':') > 0)
                                 {
                                     // Uses persistent identity
                                     val = IdentityUtils.getObjectFromPersistableIdentity(valStr, valCmd, ec);
