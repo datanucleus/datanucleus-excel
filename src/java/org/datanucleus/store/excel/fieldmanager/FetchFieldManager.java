@@ -37,7 +37,6 @@ import org.datanucleus.identity.IdentityUtils;
 import org.datanucleus.metadata.AbstractClassMetaData;
 import org.datanucleus.metadata.AbstractMemberMetaData;
 import org.datanucleus.metadata.ColumnMetaData;
-import org.datanucleus.metadata.FieldRole;
 import org.datanucleus.metadata.MetaDataUtils;
 import org.datanucleus.metadata.RelationType;
 import org.datanucleus.state.ObjectProvider;
@@ -444,7 +443,19 @@ public class FetchFieldManager extends AbstractFieldManager
             if (idStr.startsWith("[") && idStr.endsWith("]"))
             {
                 idStr = idStr.substring(1, idStr.length()-1);
-                return IdentityUtils.getObjectFromIdString(idStr, mmd, FieldRole.ROLE_FIELD, ec, true);
+                Object obj = null;
+                AbstractClassMetaData memberCmd = ec.getMetaDataManager().getMetaDataForClass(mmd.getType(), clr);
+                if (memberCmd.usesSingleFieldIdentityClass() && idStr.indexOf(':') > 0)
+                {
+                    // Uses persistent identity
+                    obj = IdentityUtils.getObjectFromPersistableIdentity(idStr, memberCmd, ec);
+                }
+                else
+                {
+                    // Uses legacy identity
+                    obj = IdentityUtils.getObjectFromIdString(idStr, memberCmd, ec, true);
+                }
+                return obj;
             }
             else
             {
@@ -484,7 +495,17 @@ public class FetchFieldManager extends AbstractFieldManager
                             // TODO handle Collection<interface>
                             AbstractClassMetaData elementCmd = mmd.getCollection().getElementClassMetaData(
                                 ec.getClassLoaderResolver(), ec.getMetaDataManager());
-                            Object element = IdentityUtils.getObjectFromIdString(components[i], elementCmd, ec, true);
+                            Object element = null;
+                            if (elementCmd.usesSingleFieldIdentityClass() && components[i].indexOf(':') > 0)
+                            {
+                                // Uses persistent identity
+                                element = IdentityUtils.getObjectFromPersistableIdentity(components[i], elementCmd, ec);
+                            }
+                            else
+                            {
+                                // Uses legacy identity
+                                element = IdentityUtils.getObjectFromIdString(components[i], elementCmd, ec, true);
+                            }
                             coll.add(element);
                         }
                     }
@@ -526,7 +547,16 @@ public class FetchFieldManager extends AbstractFieldManager
                             if (keyCmd != null)
                             {
                                 // TODO handle Map<interface, ?>
-                                key = IdentityUtils.getObjectFromIdString(keyStr, keyCmd, ec, true);
+                                if (keyCmd.usesSingleFieldIdentityClass() && components[i].indexOf(':') > 0)
+                                {
+                                    // Uses persistent identity
+                                    key = IdentityUtils.getObjectFromPersistableIdentity(components[i], keyCmd, ec);
+                                }
+                                else
+                                {
+                                    // Uses legacy identity
+                                    key = IdentityUtils.getObjectFromIdString(components[i], keyCmd, ec, true);
+                                }
                             }
                             else
                             {
@@ -551,7 +581,16 @@ public class FetchFieldManager extends AbstractFieldManager
                             if (valCmd != null)
                             {
                                 // TODO handle Collection<?, interface>
-                                val = IdentityUtils.getObjectFromIdString(valStr, valCmd, ec, true);
+                                if (valCmd.usesSingleFieldIdentityClass() && components[i].indexOf(':') > 0)
+                                {
+                                    // Uses persistent identity
+                                    val = IdentityUtils.getObjectFromPersistableIdentity(components[i], valCmd, ec);
+                                }
+                                else
+                                {
+                                    // Uses legacy identity
+                                    val = IdentityUtils.getObjectFromIdString(components[i], valCmd, ec, true);
+                                }
                             }
                             else
                             {
@@ -592,7 +631,17 @@ public class FetchFieldManager extends AbstractFieldManager
                             // TODO handle interface[]
                             AbstractClassMetaData elementCmd = mmd.getCollection().getElementClassMetaData(
                                 ec.getClassLoaderResolver(), ec.getMetaDataManager());
-                            Object element = IdentityUtils.getObjectFromIdString(components[i], elementCmd, ec, true);
+                            Object element = null;
+                            if (elementCmd.usesSingleFieldIdentityClass() && components[i].indexOf(':') > 0)
+                            {
+                                // Uses persistent identity
+                                element = IdentityUtils.getObjectFromPersistableIdentity(components[i], elementCmd, ec);
+                            }
+                            else
+                            {
+                                // Uses legacy identity
+                                element = IdentityUtils.getObjectFromIdString(components[i], elementCmd, ec, true);
+                            }
                             Array.set(array, i, element);
                         }
                     }

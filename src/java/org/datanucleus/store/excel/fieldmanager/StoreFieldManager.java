@@ -32,6 +32,7 @@ import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.Row;
 import org.datanucleus.ClassLoaderResolver;
 import org.datanucleus.ExecutionContext;
+import org.datanucleus.identity.IdentityUtils;
 import org.datanucleus.metadata.AbstractClassMetaData;
 import org.datanucleus.metadata.AbstractMemberMetaData;
 import org.datanucleus.metadata.ColumnMetaData;
@@ -51,11 +52,14 @@ import org.datanucleus.util.NucleusLogger;
  */
 public class StoreFieldManager extends AbstractStoreFieldManager
 {
+    ExecutionContext ec;
+
     protected final Row row;
 
     public StoreFieldManager(ObjectProvider op, Row row, boolean insert)
     {
         super(op, insert);
+        this.ec = op.getExecutionContext();
         this.row = row;
 
         // Add PK field(s) cell, so that the row is detected by ExcelUtils.getNumberOfRowsInSheetOfWorkbook
@@ -405,7 +409,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
             Object valuePC = op.getExecutionContext().persistObjectInternal(value, op, fieldNumber, -1);
             Object valueId = op.getExecutionContext().getApiAdapter().getIdForObject(valuePC);
             CreationHelper createHelper = row.getSheet().getWorkbook().getCreationHelper();
-            cell.setCellValue(createHelper.createRichTextString("[" + valueId.toString() + "]"));
+            cell.setCellValue(createHelper.createRichTextString("[" + IdentityUtils.getPersistableIdentityForId(ec.getApiAdapter(), valueId) + "]"));
         }
         else if (RelationType.isRelationMultiValued(relationType))
         {
@@ -420,7 +424,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                     Object element = collIter.next();
                     Object elementPC = op.getExecutionContext().persistObjectInternal(element, op, fieldNumber, -1);
                     Object elementID = op.getExecutionContext().getApiAdapter().getIdForObject(elementPC);
-                    cellValue.append(elementID.toString());
+                    cellValue.append(IdentityUtils.getPersistableIdentityForId(ec.getApiAdapter(), elementID));
                     if (collIter.hasNext())
                     {
                         cellValue.append(",");
@@ -446,7 +450,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                     {
                         Object keyPC = op.getExecutionContext().persistObjectInternal(entry.getKey(), op, fieldNumber, -1);
                         Object keyID = op.getExecutionContext().getApiAdapter().getIdForObject(keyPC);
-                        cellValue.append(keyID.toString());
+                        cellValue.append(IdentityUtils.getPersistableIdentityForId(ec.getApiAdapter(), keyID));
                     }
                     else
                     {
@@ -457,7 +461,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                     {
                         Object valPC = op.getExecutionContext().persistObjectInternal(entry.getValue(), op, fieldNumber, -1);
                         Object valID = op.getExecutionContext().getApiAdapter().getIdForObject(valPC);
-                        cellValue.append(valID.toString());
+                        cellValue.append(IdentityUtils.getPersistableIdentityForId(ec.getApiAdapter(), valID));
                     }
                     else
                     {
@@ -481,7 +485,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                     Object element = Array.get(value, i);
                     Object elementPC = op.getExecutionContext().persistObjectInternal(element, op, fieldNumber, -1);
                     Object elementID = op.getExecutionContext().getApiAdapter().getIdForObject(elementPC);
-                    cellValue.append(elementID.toString());
+                    cellValue.append(IdentityUtils.getPersistableIdentityForId(ec.getApiAdapter(), elementID));
                     if (i < (Array.getLength(value)-1))
                     {
                         cellValue.append(",");
