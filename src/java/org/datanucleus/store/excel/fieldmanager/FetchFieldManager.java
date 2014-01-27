@@ -550,12 +550,12 @@ public class FetchFieldManager extends AbstractFieldManager
                                 if (keyCmd.usesSingleFieldIdentityClass() && components[i].indexOf(':') > 0)
                                 {
                                     // Uses persistent identity
-                                    key = IdentityUtils.getObjectFromPersistableIdentity(components[i], keyCmd, ec);
+                                    key = IdentityUtils.getObjectFromPersistableIdentity(keyStr, keyCmd, ec);
                                 }
                                 else
                                 {
                                     // Uses legacy identity
-                                    key = IdentityUtils.getObjectFromIdString(components[i], keyCmd, ec, true);
+                                    key = IdentityUtils.getObjectFromIdString(keyStr, keyCmd, ec, true);
                                 }
                             }
                             else
@@ -584,12 +584,12 @@ public class FetchFieldManager extends AbstractFieldManager
                                 if (valCmd.usesSingleFieldIdentityClass() && components[i].indexOf(':') > 0)
                                 {
                                     // Uses persistent identity
-                                    val = IdentityUtils.getObjectFromPersistableIdentity(components[i], valCmd, ec);
+                                    val = IdentityUtils.getObjectFromPersistableIdentity(valStr, valCmd, ec);
                                 }
                                 else
                                 {
                                     // Uses legacy identity
-                                    val = IdentityUtils.getObjectFromIdString(components[i], valCmd, ec, true);
+                                    val = IdentityUtils.getObjectFromIdString(valStr, valCmd, ec, true);
                                 }
                             }
                             else
