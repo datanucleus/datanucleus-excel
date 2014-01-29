@@ -27,7 +27,7 @@ import java.util.Set;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.datanucleus.ClassLoaderResolver;
-import org.datanucleus.NucleusContext;
+import org.datanucleus.PersistenceNucleusContext;
 import org.datanucleus.metadata.AbstractClassMetaData;
 import org.datanucleus.store.AbstractStoreManager;
 import org.datanucleus.store.connection.ManagedConnection;
@@ -41,7 +41,7 @@ import org.datanucleus.util.NucleusLogger;
  */
 public abstract class ExcelStoreManager extends AbstractStoreManager implements SchemaAwareStoreManager
 {
-    public ExcelStoreManager(String storeMgrKey, ClassLoaderResolver clr, NucleusContext ctx, Map<String, Object> props)
+    public ExcelStoreManager(String storeMgrKey, ClassLoaderResolver clr, PersistenceNucleusContext ctx, Map<String, Object> props)
     {
         super(storeMgrKey, clr, ctx, props);
 

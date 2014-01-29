@@ -21,7 +21,7 @@ package org.datanucleus.store.excel;
 import java.util.Map;
 
 import org.datanucleus.ClassLoaderResolver;
-import org.datanucleus.NucleusContext;
+import org.datanucleus.PersistenceNucleusContext;
 
 /**
  * StoreManager for data access to XLS documents.
@@ -29,7 +29,7 @@ import org.datanucleus.NucleusContext;
  */
 public class XLSStoreManager extends ExcelStoreManager
 {
-    public XLSStoreManager(ClassLoaderResolver clr, NucleusContext ctx, Map<String, Object> props)
+    public XLSStoreManager(ClassLoaderResolver clr, PersistenceNucleusContext ctx, Map<String, Object> props)
     {
         super("excel", clr, ctx, props);
     }

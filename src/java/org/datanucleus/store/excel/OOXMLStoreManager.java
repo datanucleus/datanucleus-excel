@@ -20,7 +20,7 @@ package org.datanucleus.store.excel;
 import java.util.Map;
 
 import org.datanucleus.ClassLoaderResolver;
-import org.datanucleus.NucleusContext;
+import org.datanucleus.PersistenceNucleusContext;
 import org.datanucleus.util.ClassUtils;
 
 /**
@@ -29,7 +29,7 @@ import org.datanucleus.util.ClassUtils;
  */
 public class OOXMLStoreManager extends ExcelStoreManager
 {
-    public OOXMLStoreManager(ClassLoaderResolver clr, NucleusContext ctx, Map<String, Object> props)
+    public OOXMLStoreManager(ClassLoaderResolver clr, PersistenceNucleusContext ctx, Map<String, Object> props)
     {
         super("ooxml", clr, ctx, props);
 
