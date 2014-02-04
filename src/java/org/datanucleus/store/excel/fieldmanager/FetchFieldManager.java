@@ -33,6 +33,7 @@ import org.datanucleus.ClassLoaderResolver;
 import org.datanucleus.ExecutionContext;
 import org.datanucleus.exceptions.NucleusDataStoreException;
 import org.datanucleus.exceptions.NucleusException;
+import org.datanucleus.exceptions.NucleusUserException;
 import org.datanucleus.identity.IdentityUtils;
 import org.datanucleus.metadata.AbstractClassMetaData;
 import org.datanucleus.metadata.AbstractMemberMetaData;
@@ -42,7 +43,6 @@ import org.datanucleus.metadata.RelationType;
 import org.datanucleus.state.ObjectProvider;
 import org.datanucleus.store.excel.ExcelUtils;
 import org.datanucleus.store.fieldmanager.AbstractFetchFieldManager;
-import org.datanucleus.store.fieldmanager.FieldManager;
 import org.datanucleus.store.types.SCOUtils;
 import org.datanucleus.store.types.TypeManager;
 import org.datanucleus.store.types.converters.TypeConverter;
@@ -192,17 +192,30 @@ public class FetchFieldManager extends AbstractFetchFieldManager
         RelationType relationType = mmd.getRelationType(clr);
 
         // Special cases
-        if (RelationType.isRelationSingleValued(relationType) && mmd.isEmbedded())
+        if (relationType != RelationType.NONE)
         {
-            // Persistable object embedded into table of this object
-            Class embcls = mmd.getType();
-            AbstractClassMetaData embcmd = ec.getMetaDataManager().getMetaDataForClass(embcls, clr);
-            if (embcmd != null)
+            boolean embedded = isMemberEmbedded(mmd, relationType, null);
+            if (embedded)
             {
-                ObjectProvider embSM = ec.newObjectProviderForEmbedded(embcmd, op, fieldNumber);
-                FieldManager ffm = new FetchEmbeddedFieldManager(embSM, sheet, row, mmd);
-                embSM.replaceFields(embcmd.getAllMemberPositions(), ffm);
-                return embSM.getObject();
+                if (RelationType.isRelationSingleValued(relationType))
+                {
+                    // Persistable object embedded into table of this object
+                    Class embcls = mmd.getType();
+                    AbstractClassMetaData embcmd = ec.getMetaDataManager().getMetaDataForClass(embcls, clr);
+                    if (embcmd != null)
+                    {
+                        ObjectProvider embOP = ec.newObjectProviderForEmbedded(embcmd, op, fieldNumber);
+                        embOP.replaceFields(embcmd.getAllMemberPositions(), new FetchEmbeddedFieldManager(embOP, sheet, row, mmd));
+                        return embOP.getObject();
+                    }
+                }
+                else if (RelationType.isRelationMultiValued(relationType))
+                {
+                    if (embedded)
+                    {
+                        throw new NucleusUserException("Dont support embedded multi-valued field at " + mmd.getFullFieldName() + " with Excel");
+                    }
+                }
             }
         }
 

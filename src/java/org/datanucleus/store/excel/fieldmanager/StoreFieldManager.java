@@ -31,6 +31,7 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.Row;
 import org.datanucleus.ClassLoaderResolver;
+import org.datanucleus.exceptions.NucleusUserException;
 import org.datanucleus.identity.IdentityUtils;
 import org.datanucleus.metadata.AbstractClassMetaData;
 import org.datanucleus.metadata.AbstractMemberMetaData;
@@ -240,27 +241,37 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         }
 
         // Special cases
-        // TODO Handle full range of embedded specifications (see isMemberEmbedded)
         RelationType relationType = mmd.getRelationType(clr);
-        if (RelationType.isRelationSingleValued(relationType) && mmd.isEmbedded())
+        if (relationType != RelationType.NONE)
         {
-            // Persistable object embedded into this table
-            Class embcls = mmd.getType();
-            AbstractClassMetaData embcmd = ec.getMetaDataManager().getMetaDataForClass(embcls, clr);
-            if (embcmd != null) 
+            boolean embedded = isMemberEmbedded(mmd, relationType, null);
+            if (embedded)
             {
-                ObjectProvider embSM = null;
-                if (value != null)
+                if (RelationType.isRelationSingleValued(relationType))
                 {
-                    embSM = ec.findObjectProviderForEmbedded(value, op, mmd);
-                }
-                else
-                {
-                    embSM = ec.newObjectProviderForEmbedded(embcmd, op, fieldNumber);
-                }
+                    // Persistable object embedded into this table
+                    Class embcls = mmd.getType();
+                    AbstractClassMetaData embcmd = ec.getMetaDataManager().getMetaDataForClass(embcls, clr);
+                    if (embcmd != null) 
+                    {
+                        ObjectProvider embSM = null;
+                        if (value != null)
+                        {
+                            embSM = ec.findObjectProviderForEmbedded(value, op, mmd);
+                        }
+                        else
+                        {
+                            embSM = ec.newObjectProviderForEmbedded(embcmd, op, fieldNumber);
+                        }
 
-                embSM.provideFields(embcmd.getAllMemberPositions(), new StoreEmbeddedFieldManager(embSM, row, mmd, insert));
-                return;
+                        embSM.provideFields(embcmd.getAllMemberPositions(), new StoreEmbeddedFieldManager(embSM, row, mmd, insert));
+                        return;
+                    }
+                }
+                else if (RelationType.isRelationMultiValued(relationType))
+                {
+                    throw new NucleusUserException("Dont support embedded multi-valued field at " + mmd.getFullFieldName() + " with Excel");
+                }
             }
         }
 
