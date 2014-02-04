@@ -41,7 +41,7 @@ import org.datanucleus.metadata.MetaDataUtils;
 import org.datanucleus.metadata.RelationType;
 import org.datanucleus.state.ObjectProvider;
 import org.datanucleus.store.excel.ExcelUtils;
-import org.datanucleus.store.fieldmanager.AbstractFieldManager;
+import org.datanucleus.store.fieldmanager.AbstractFetchFieldManager;
 import org.datanucleus.store.fieldmanager.FieldManager;
 import org.datanucleus.store.types.SCOUtils;
 import org.datanucleus.store.types.TypeManager;
@@ -53,28 +53,21 @@ import org.datanucleus.util.NucleusLogger;
  * FieldManager to handle the retrieval of information from an Excel worksheet row/column into
  * a field of an object.
  */
-public class FetchFieldManager extends AbstractFieldManager
+public class FetchFieldManager extends AbstractFetchFieldManager
 {
-    protected ObjectProvider op;
-    protected ExecutionContext ec;
-    protected AbstractClassMetaData cmd;
     protected Sheet sheet;
     protected int row;
 
     public FetchFieldManager(ObjectProvider op, Sheet sheet, int row)
     {
-        this.op = op;
-        this.ec = op.getExecutionContext();
-        this.cmd = op.getClassMetaData();
+        super(op);
         this.row = row;
         this.sheet = sheet;
     }
 
     public FetchFieldManager(ExecutionContext ec, AbstractClassMetaData cmd, Sheet sheet, int row)
     {
-        this.op = null;
-        this.ec = ec;
-        this.cmd = cmd;
+        super(ec, cmd);
         this.row = row;
         this.sheet = sheet;
     }

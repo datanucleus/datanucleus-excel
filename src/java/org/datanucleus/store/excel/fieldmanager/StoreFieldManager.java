@@ -31,7 +31,6 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.Row;
 import org.datanucleus.ClassLoaderResolver;
-import org.datanucleus.ExecutionContext;
 import org.datanucleus.identity.IdentityUtils;
 import org.datanucleus.metadata.AbstractClassMetaData;
 import org.datanucleus.metadata.AbstractMemberMetaData;
@@ -52,14 +51,11 @@ import org.datanucleus.util.NucleusLogger;
  */
 public class StoreFieldManager extends AbstractStoreFieldManager
 {
-    ExecutionContext ec;
-
     protected final Row row;
 
     public StoreFieldManager(ObjectProvider op, Row row, boolean insert)
     {
         super(op, insert);
-        this.ec = op.getExecutionContext();
         this.row = row;
 
         // Add PK field(s) cell, so that the row is detected by ExcelUtils.getNumberOfRowsInSheetOfWorkbook
@@ -236,16 +232,15 @@ public class StoreFieldManager extends AbstractStoreFieldManager
 
     public void storeObjectField(int fieldNumber, Object value)
     {
-        ExecutionContext ec = op.getExecutionContext();
         ClassLoaderResolver clr = ec.getClassLoaderResolver();
-        AbstractMemberMetaData mmd = 
-            op.getClassMetaData().getMetaDataForManagedMemberAtAbsolutePosition(fieldNumber);
+        AbstractMemberMetaData mmd = op.getClassMetaData().getMetaDataForManagedMemberAtAbsolutePosition(fieldNumber);
         if (!isStorable(mmd))
         {
             return;
         }
 
         // Special cases
+        // TODO Handle full range of embedded specifications (see isMemberEmbedded)
         RelationType relationType = mmd.getRelationType(clr);
         if (RelationType.isRelationSingleValued(relationType) && mmd.isEmbedded())
         {
@@ -290,7 +285,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
             if (mmd.getTypeConverterName() != null)
             {
                 // User-defined converter
-                TypeManager typeMgr = op.getExecutionContext().getNucleusContext().getTypeManager();
+                TypeManager typeMgr = ec.getNucleusContext().getTypeManager();
                 TypeConverter conv = typeMgr.getTypeConverterForName(mmd.getTypeConverterName());
                 Class datastoreType = TypeManager.getDatastoreTypeForTypeConverter(conv, mmd.getType());
                 if (datastoreType == String.class)
@@ -361,7 +356,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
             else
             {
                 // Try to persist using converters
-                TypeManager typeMgr = op.getExecutionContext().getNucleusContext().getTypeManager();
+                TypeManager typeMgr = ec.getNucleusContext().getTypeManager();
                 boolean useLong = false;
                 ColumnMetaData[] colmds = mmd.getColumnMetaData();
                 if (colmds != null && colmds.length == 1)
@@ -406,8 +401,8 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         else if (RelationType.isRelationSingleValued(relationType))
         {
             // Persistable object - persist the related object and store the identity in the cell
-            Object valuePC = op.getExecutionContext().persistObjectInternal(value, op, fieldNumber, -1);
-            Object valueId = op.getExecutionContext().getApiAdapter().getIdForObject(valuePC);
+            Object valuePC = ec.persistObjectInternal(value, op, fieldNumber, -1);
+            Object valueId = ec.getApiAdapter().getIdForObject(valuePC);
             CreationHelper createHelper = row.getSheet().getWorkbook().getCreationHelper();
             cell.setCellValue(createHelper.createRichTextString("[" + IdentityUtils.getPersistableIdentityForId(ec.getApiAdapter(), valueId) + "]"));
         }
@@ -422,8 +417,8 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                 while (collIter.hasNext())
                 {
                     Object element = collIter.next();
-                    Object elementPC = op.getExecutionContext().persistObjectInternal(element, op, fieldNumber, -1);
-                    Object elementID = op.getExecutionContext().getApiAdapter().getIdForObject(elementPC);
+                    Object elementPC = ec.persistObjectInternal(element, op, fieldNumber, -1);
+                    Object elementID = ec.getApiAdapter().getIdForObject(elementPC);
                     cellValue.append(IdentityUtils.getPersistableIdentityForId(ec.getApiAdapter(), elementID));
                     if (collIter.hasNext())
                     {
@@ -436,8 +431,8 @@ public class StoreFieldManager extends AbstractStoreFieldManager
             }
             else if (mmd.hasMap())
             {
-                AbstractClassMetaData keyCmd = mmd.getMap().getKeyClassMetaData(clr, op.getExecutionContext().getMetaDataManager());
-                AbstractClassMetaData valCmd = mmd.getMap().getValueClassMetaData(clr, op.getExecutionContext().getMetaDataManager());
+                AbstractClassMetaData keyCmd = mmd.getMap().getKeyClassMetaData(clr, ec.getMetaDataManager());
+                AbstractClassMetaData valCmd = mmd.getMap().getValueClassMetaData(clr, ec.getMetaDataManager());
 
                 StringBuffer cellValue = new StringBuffer("[");
                 Map map = (Map)value;
@@ -448,8 +443,8 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                     cellValue.append("[");
                     if (keyCmd != null)
                     {
-                        Object keyPC = op.getExecutionContext().persistObjectInternal(entry.getKey(), op, fieldNumber, -1);
-                        Object keyID = op.getExecutionContext().getApiAdapter().getIdForObject(keyPC);
+                        Object keyPC = ec.persistObjectInternal(entry.getKey(), op, fieldNumber, -1);
+                        Object keyID = ec.getApiAdapter().getIdForObject(keyPC);
                         cellValue.append(IdentityUtils.getPersistableIdentityForId(ec.getApiAdapter(), keyID));
                     }
                     else
@@ -459,8 +454,8 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                     cellValue.append("],[");
                     if (valCmd != null)
                     {
-                        Object valPC = op.getExecutionContext().persistObjectInternal(entry.getValue(), op, fieldNumber, -1);
-                        Object valID = op.getExecutionContext().getApiAdapter().getIdForObject(valPC);
+                        Object valPC = ec.persistObjectInternal(entry.getValue(), op, fieldNumber, -1);
+                        Object valID = ec.getApiAdapter().getIdForObject(valPC);
                         cellValue.append(IdentityUtils.getPersistableIdentityForId(ec.getApiAdapter(), valID));
                     }
                     else
@@ -483,8 +478,8 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                 for (int i=0;i<Array.getLength(value);i++)
                 {
                     Object element = Array.get(value, i);
-                    Object elementPC = op.getExecutionContext().persistObjectInternal(element, op, fieldNumber, -1);
-                    Object elementID = op.getExecutionContext().getApiAdapter().getIdForObject(elementPC);
+                    Object elementPC = ec.persistObjectInternal(element, op, fieldNumber, -1);
+                    Object elementID = ec.getApiAdapter().getIdForObject(elementPC);
                     cellValue.append(IdentityUtils.getPersistableIdentityForId(ec.getApiAdapter(), elementID));
                     if (i < (Array.getLength(value)-1))
                     {
