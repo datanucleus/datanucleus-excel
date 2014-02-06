@@ -244,9 +244,9 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         RelationType relationType = mmd.getRelationType(clr);
         if (relationType != RelationType.NONE)
         {
-            boolean embedded = isMemberEmbedded(mmd, relationType, null);
-            if (embedded)
+            if (MetaDataUtils.getInstance().isMemberEmbedded(ec.getMetaDataManager(), clr, mmd, relationType, null))
             {
+                // Embedded field
                 if (RelationType.isRelationSingleValued(relationType))
                 {
                     // Persistable object embedded into this table
