@@ -20,6 +20,7 @@ package org.datanucleus.store.excel;
 import java.util.Map;
 
 import org.datanucleus.ExecutionContext;
+import org.datanucleus.PropertyNames;
 import org.datanucleus.exceptions.NucleusException;
 import org.datanucleus.store.StoreManager;
 import org.datanucleus.store.connection.AbstractConnectionFactory;
@@ -45,7 +46,7 @@ public class ConnectionFactoryImpl extends AbstractConnectionFactory
         String url = storeMgr.getConnectionURL();
         if (url == null)
         {
-            throw new NucleusException("You haven't specified persistence property 'datanucleus.ConnectionURL' (or alias)");
+            throw new NucleusException("You haven't specified persistence property '" + PropertyNames.PROPERTY_CONNECTION_URL + "' (or alias)");
         }
 
         int filenameStart = 6;
