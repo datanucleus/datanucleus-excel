@@ -19,21 +19,15 @@ package org.datanucleus.store.excel;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
 import org.datanucleus.ClassLoaderResolver;
 import org.datanucleus.PersistenceNucleusContext;
-import org.datanucleus.metadata.AbstractClassMetaData;
 import org.datanucleus.store.AbstractStoreManager;
-import org.datanucleus.store.connection.ManagedConnection;
 import org.datanucleus.store.schema.SchemaAwareStoreManager;
 import org.datanucleus.util.ClassUtils;
-import org.datanucleus.util.NucleusLogger;
 
 /**
  * StoreManager for data access to Excel documents (XSL or OOXML).
@@ -48,6 +42,7 @@ public abstract class ExcelStoreManager extends AbstractStoreManager implements 
         // Check if Apache POI JAR is in CLASSPATH
         ClassUtils.assertClassForJarExistsInClasspath(clr, "org.apache.poi.hssf.usermodel.HSSFWorkbook", "poi.jar");
 
+        schemaHandler = new ExcelSchemaHandler(this);
         persistenceHandler = new ExcelPersistenceHandler(this);
 
         logConfiguration();
@@ -69,89 +64,26 @@ public abstract class ExcelStoreManager extends AbstractStoreManager implements 
 
     public void createSchema(String schemaName, Properties props)
     {
-        throw new UnsupportedOperationException("Dont support the creation of a schema with Excel since there is no equivalent concept");
+        schemaHandler.createSchema(schemaName, props, null);
     }
 
     public void deleteSchema(String schemaName, Properties props)
     {
-        throw new UnsupportedOperationException("Dont support the deletion of a schema with Excel since there is no equivalent concept");
+        schemaHandler.deleteSchema(schemaName, props, null);
     }
 
     public void createSchemaForClasses(Set<String> classNames, Properties props)
     {
-        ManagedConnection mconn = getConnection(-1);
-        try
-        {
-            Workbook wb = (Workbook) mconn.getConnection();
-
-            Iterator<String> classIter = classNames.iterator();
-            ClassLoaderResolver clr = nucleusContext.getClassLoaderResolver(null);
-            while (classIter.hasNext())
-            {
-                String className = classIter.next();
-                AbstractClassMetaData cmd = getMetaDataManager().getMetaDataForClass(className, clr);
-                if (cmd != null)
-                {
-                    String sheetName = getNamingFactory().getTableName(cmd);
-                    Sheet sheet = wb.getSheet(sheetName);
-                    if (sheet == null)
-                    {
-                        // Sheet doesn't exist so create it
-                        sheet = wb.createSheet(sheetName);
-                        if (NucleusLogger.DATASTORE_PERSIST.isDebugEnabled())
-                        {
-                            NucleusLogger.DATASTORE_PERSIST.debug(LOCALISER.msg("Excel.SchemaCreate.Class",
-                                cmd.getFullClassName(), sheetName));
-                        }
-
-                        // Create columns of sheet
-                    }
-                }
-            }
-        }
-        finally
-        {
-            mconn.release();
-        }
+        schemaHandler.createSchemaForClasses(classNames, props, null);
     }
 
     public void deleteSchemaForClasses(Set<String> classNames, Properties props)
     {
-        ManagedConnection mconn = getConnection(-1);
-        try
-        {
-            Workbook wb = (Workbook) mconn.getConnection();
-
-            Iterator<String> classIter = classNames.iterator();
-            ClassLoaderResolver clr = nucleusContext.getClassLoaderResolver(null);
-            while (classIter.hasNext())
-            {
-                String className = classIter.next();
-                AbstractClassMetaData cmd = getMetaDataManager().getMetaDataForClass(className, clr);
-                if (cmd != null)
-                {
-                    String sheetName = getNamingFactory().getTableName(cmd);
-                    Sheet sheet = wb.getSheet(sheetName);
-                    if (sheet != null)
-                    {
-                        wb.removeSheetAt(wb.getSheetIndex(sheetName));
-                        if (NucleusLogger.DATASTORE_PERSIST.isDebugEnabled())
-                        {
-                            NucleusLogger.DATASTORE_PERSIST.debug(LOCALISER.msg("Excel.SchemaDelete.Class",
-                                cmd.getFullClassName(), sheetName));
-                        }
-                    }
-                }
-            }
-        }
-        finally
-        {
-            mconn.release();
-        }
+        schemaHandler.deleteSchemaForClasses(classNames, props, null);
     }
 
     public void validateSchemaForClasses(Set<String> classNames, Properties props)
     {
-        throw new UnsupportedOperationException("Don't currently support the validation of schema for classes with Excel");
+        schemaHandler.validateSchema(classNames, props, null);
     }
 }
