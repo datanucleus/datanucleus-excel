@@ -12,7 +12,7 @@
     <version>4.0.0-m1-SNAPSHOT</version>
     <artifactId>datanucleus-excel</artifactId>
 
-    <name>DataNucleus EXCEL plugin</name>
+    <name>DataNucleus Excel plugin</name>
     <description>
         DataNucleus supports persistence to heterogeneous datastores and this plugin provides persistence to Excel.
     </description>
