@@ -26,6 +26,7 @@ import java.util.Set;
 import org.datanucleus.ClassLoaderResolver;
 import org.datanucleus.PersistenceNucleusContext;
 import org.datanucleus.store.AbstractStoreManager;
+import org.datanucleus.store.StoreManager;
 import org.datanucleus.store.schema.SchemaAwareStoreManager;
 import org.datanucleus.util.ClassUtils;
 
@@ -54,11 +55,11 @@ public abstract class ExcelStoreManager extends AbstractStoreManager implements 
     public Collection getSupportedOptions()
     {
         Set set = new HashSet();
-        set.add("ApplicationIdentity");
-        set.add("DatastoreIdentity");
-        set.add("NonDurableIdentity");
-        set.add("TransactionIsolationLevel.read-committed");
-        set.add("ORM");
+        set.add(StoreManager.OPTION_APPLICATION_ID);
+        set.add(StoreManager.OPTION_DATASTORE_ID);
+        set.add(StoreManager.OPTION_NONDURABLE_ID);
+        set.add(StoreManager.OPTION_ORM);
+        set.add(StoreManager.OPTION_TXN_ISOLATION_READ_COMMITTED);
         return set;
     }
 
