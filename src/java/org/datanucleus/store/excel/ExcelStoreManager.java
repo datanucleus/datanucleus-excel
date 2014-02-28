@@ -59,6 +59,7 @@ public abstract class ExcelStoreManager extends AbstractStoreManager implements 
         set.add(StoreManager.OPTION_DATASTORE_ID);
         set.add(StoreManager.OPTION_NONDURABLE_ID);
         set.add(StoreManager.OPTION_ORM);
+        set.add(StoreManager.OPTION_ORM_EMBEDDED_PC);
         set.add(StoreManager.OPTION_TXN_ISOLATION_READ_COMMITTED);
         return set;
     }
