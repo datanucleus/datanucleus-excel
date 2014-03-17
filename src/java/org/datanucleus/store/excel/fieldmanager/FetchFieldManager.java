@@ -44,8 +44,8 @@ import org.datanucleus.state.ObjectProvider;
 import org.datanucleus.store.excel.ExcelUtils;
 import org.datanucleus.store.fieldmanager.AbstractFetchFieldManager;
 import org.datanucleus.store.types.SCOUtils;
-import org.datanucleus.store.types.TypeManager;
 import org.datanucleus.store.types.converters.TypeConverter;
+import org.datanucleus.store.types.converters.TypeConverterHelper;
 import org.datanucleus.util.Base64;
 import org.datanucleus.util.NucleusLogger;
 
@@ -236,7 +236,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
                 // User-defined type converter
                 Object value = null;
                 TypeConverter conv = ec.getNucleusContext().getTypeManager().getTypeConverterForName(mmd.getTypeConverterName());
-                Class datastoreType = TypeManager.getDatastoreTypeForTypeConverter(conv, mmd.getType());
+                Class datastoreType = TypeConverterHelper.getDatastoreTypeForTypeConverter(conv, mmd.getType());
                 if (datastoreType == String.class)
                 {
                     value = conv.toMemberType(cell.getRichStringCellValue().getString());

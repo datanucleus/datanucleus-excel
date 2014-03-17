@@ -44,6 +44,7 @@ import org.datanucleus.store.excel.ExcelUtils;
 import org.datanucleus.store.fieldmanager.AbstractStoreFieldManager;
 import org.datanucleus.store.types.TypeManager;
 import org.datanucleus.store.types.converters.TypeConverter;
+import org.datanucleus.store.types.converters.TypeConverterHelper;
 import org.datanucleus.util.Base64;
 import org.datanucleus.util.NucleusLogger;
 
@@ -298,7 +299,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                 // User-defined converter
                 TypeManager typeMgr = ec.getNucleusContext().getTypeManager();
                 TypeConverter conv = typeMgr.getTypeConverterForName(mmd.getTypeConverterName());
-                Class datastoreType = TypeManager.getDatastoreTypeForTypeConverter(conv, mmd.getType());
+                Class datastoreType = TypeConverterHelper.getDatastoreTypeForTypeConverter(conv, mmd.getType());
                 if (datastoreType == String.class)
                 {
                     CreationHelper createHelper = row.getSheet().getWorkbook().getCreationHelper();
