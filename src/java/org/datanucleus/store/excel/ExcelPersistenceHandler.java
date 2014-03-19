@@ -189,10 +189,11 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                     idCell.setCellValue(idValue);
                 }
             }
-            if (cmd.isVersioned())
+
+            VersionMetaData vermd = cmd.getVersionMetaDataForClass();
+            if (vermd != null)
             {
                 // versioned object so set its version
-                VersionMetaData vermd = cmd.getVersionMetaDataForClass();
                 int verCellNum = (int)ExcelUtils.getColumnIndexForFieldOfClass(cmd, -2);
                 Cell verCell = row.getCell(verCellNum);
                 if (verCell == null)
@@ -200,27 +201,26 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                     verCell = row.createCell(verCellNum);
                 }
 
-                if (vermd.getVersionStrategy() == VersionStrategy.VERSION_NUMBER)
+                Object nextVersion = VersionHelper.getNextVersion(vermd.getVersionStrategy(), null);
+                op.setTransactionalVersion(nextVersion);
+                if (nextVersion instanceof Long)
                 {
-                    long versionNumber = 1;
-                    op.setTransactionalVersion(Long.valueOf(versionNumber));
                     if (NucleusLogger.DATASTORE.isDebugEnabled())
                     {
                         NucleusLogger.DATASTORE.debug(LOCALISER_EXCEL.msg("Excel.Insert.ObjectPersistedWithVersion",
-                            op.getObjectAsPrintable(), op.getInternalObjectId(), "" + versionNumber));
+                            op.getObjectAsPrintable(), op.getInternalObjectId(), "" + nextVersion));
                     }
-                    verCell.setCellValue(versionNumber);
+                    verCell.setCellValue((Long)nextVersion);
                 }
-                else if (vermd.getVersionStrategy() == VersionStrategy.DATE_TIME)
+                else if (nextVersion instanceof Timestamp)
                 {
-                    Date date = new Date();
-                    Timestamp ts = new Timestamp(date.getTime());
-                    op.setTransactionalVersion(ts);
                     if (NucleusLogger.DATASTORE.isDebugEnabled())
                     {
                         NucleusLogger.DATASTORE.debug(LOCALISER_EXCEL.msg("Excel.Insert.ObjectPersistedWithVersion",
-                            op.getObjectAsPrintable(), op.getInternalObjectId(), "" + ts));
+                            op.getObjectAsPrintable(), op.getInternalObjectId(), "" + nextVersion));
                     }
+                    Date date = new Date();
+                    date.setTime(((Timestamp)nextVersion).getTime());
                     verCell.setCellValue(date);
                 }
             }
@@ -258,25 +258,28 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
             final Sheet sheet = ExcelUtils.getSheetForClass(op, wb);
 
             int[] updatedFieldNums = fieldNumbers;
-            Object currentVersion = op.getTransactionalVersion();
             Object nextVersion = null;
-            if (cmd.isVersioned())
+            VersionMetaData vermd = cmd.getVersionMetaDataForClass();
+            if (vermd != null)
             {
-                NucleusLogger.PERSISTENCE.warn("This datastore doesn't support optimistic version checks since the datastore file is for a single-connection");
+                Object currentVersion = op.getTransactionalVersion();
+                if (currentVersion instanceof Integer)
+                {
+                    // Cater for Integer-based versions TODO Generalise this
+                    currentVersion = Long.valueOf(((Integer)currentVersion).longValue());
+                }
+
+                if (cmd.isVersioned())
+                {
+                    NucleusLogger.PERSISTENCE.warn("This datastore doesn't support optimistic version checks since the datastore file is for a single-connection");
+                }
 
                 // Version object so calculate version to store with
-                VersionMetaData vermd = cmd.getVersionMetaDataForClass();
+                nextVersion = VersionHelper.getNextVersion(vermd.getVersionStrategy(), currentVersion);
                 if (vermd.getFieldName() != null)
                 {
                     // Version field
                     AbstractMemberMetaData verMmd = cmd.getMetaDataForMember(vermd.getFieldName());
-                    if (currentVersion instanceof Integer)
-                    {
-                        // Cater for Integer-based versions TODO Generalise this
-                        currentVersion = Long.valueOf(((Integer)currentVersion).longValue());
-                    }
-
-                    nextVersion = VersionHelper.getNextVersion(vermd.getVersionStrategy(), currentVersion);
                     if (verMmd.getType() == Integer.class || verMmd.getType() == int.class)
                     {
                         // Cater for Integer-based versions TODO Generalise this
@@ -300,12 +303,6 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                         updatedFieldNums[fieldNumbers.length] = verMmd.getAbsoluteFieldNumber();
                     }
                 }
-                else
-                {
-                    // Surrogate version column
-                    nextVersion = VersionHelper.getNextVersion(vermd.getVersionStrategy(), currentVersion);
-                }
-                op.setTransactionalVersion(nextVersion);
             }
 
             long startTime = System.currentTimeMillis();
@@ -334,35 +331,27 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
             }
             op.provideFields(updatedFieldNums, new StoreFieldManager(op, row, false));
 
-            if (cmd.isVersioned())
+            if (vermd != null)
             {
                 // Versioned object so set version cell in spreadsheet
-                VersionMetaData vermd = cmd.getVersionMetaDataForClass();
+                op.setTransactionalVersion(nextVersion);
+                if (NucleusLogger.DATASTORE.isDebugEnabled())
+                {
+                    NucleusLogger.DATASTORE.debug(LOCALISER_EXCEL.msg("Excel.Insert.ObjectPersistedWithVersion",
+                        op.getObjectAsPrintable(), op.getInternalObjectId(), "" + nextVersion));
+                }
+
                 int verCellNum = (int)ExcelUtils.getColumnIndexForFieldOfClass(cmd, -2);
                 Cell verCell = row.getCell(verCellNum);
-                if (vermd.getVersionStrategy() == VersionStrategy.VERSION_NUMBER)
+                if (nextVersion instanceof Long)
                 {
-                    op.setTransactionalVersion(nextVersion);
-                    if (NucleusLogger.DATASTORE.isDebugEnabled())
-                    {
-                        NucleusLogger.DATASTORE.debug(LOCALISER_EXCEL.msg("Excel.Insert.ObjectPersistedWithVersion",
-                            op.getObjectAsPrintable(), op.getInternalObjectId(), 
-                            "" + nextVersion));
-                    }
                     verCell.setCellValue(((Long)nextVersion).longValue());
                 }
-                else if (vermd.getVersionStrategy() == VersionStrategy.DATE_TIME)
+                else if (nextVersion instanceof Timestamp)
                 {
-                    op.setTransactionalVersion(nextVersion);
-                    if (NucleusLogger.DATASTORE.isDebugEnabled())
-                    {
-                        NucleusLogger.DATASTORE.debug(LOCALISER_EXCEL.msg("Excel.Insert.ObjectPersistedWithVersion",
-                            op.getObjectAsPrintable(), op.getInternalObjectId(), "" + nextVersion));
-                    }
-                    Timestamp ts = (Timestamp)nextVersion;
                     Date date = new Date();
-                    date.setTime(ts.getTime());
-                    verCell.setCellValue(ts);
+                    date.setTime(((Timestamp)nextVersion).getTime());
+                    verCell.setCellValue(date);
                 }
             }
 
