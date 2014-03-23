@@ -380,6 +380,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                     }
                 }
 
+                // TODO Make use of default TypeConverter for a type before falling back to String/Long
                 TypeConverter strConv = typeMgr.getTypeConverterForType(mmd.getType(), String.class);
                 TypeConverter longConv = typeMgr.getTypeConverterForType(mmd.getType(), Long.class);
                 if (useLong)
