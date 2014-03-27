@@ -308,10 +308,10 @@ public class StoreFieldManager extends AbstractStoreFieldManager
             }
         }
 
-        storeObjectFieldInCell(fieldNumber, value, mmd, clr);
+        storeObjectFieldInCell(fieldNumber, value, mmd, clr, relationType);
     }
 
-    protected void storeObjectFieldInCell(int fieldNumber, Object value, AbstractMemberMetaData mmd, ClassLoaderResolver clr)
+    protected void storeObjectFieldInCell(int fieldNumber, Object value, AbstractMemberMetaData mmd, ClassLoaderResolver clr, RelationType relationType)
     {
         MemberColumnMapping mapping = getColumnMapping(fieldNumber);
         if (mapping.getNumberOfColumns() > 1)
@@ -321,46 +321,49 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         }
 
         int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
-        Cell cell = row.getCell((int)index);
-        if (cell == null)
-        {
-            cell = row.createCell((int)index);
-        }
-
-        RelationType relationType = mmd.getRelationType(clr);
+        Cell cell = row.getCell((int)index, Row.CREATE_NULL_AS_BLANK);
         if (value == null)
         {
             row.removeCell(cell);
         }
         else if (relationType == RelationType.NONE)
         {
-            // TODO Use converter from "mapping"
-            if (mmd.getTypeConverterName() != null)
+            if (mapping.getTypeConverter() != null)
             {
-                // User-defined converter
-                TypeManager typeMgr = ec.getNucleusContext().getTypeManager();
-                TypeConverter conv = typeMgr.getTypeConverterForName(mmd.getTypeConverterName());
-                Class datastoreType = TypeConverterHelper.getDatastoreTypeForTypeConverter(conv, mmd.getType());
-                if (datastoreType == String.class)
+                // Persist using the provided converter
+                Object datastoreValue = mapping.getTypeConverter().toDatastoreType(value);
+                Class datastoreType = TypeConverterHelper.getDatastoreTypeForTypeConverter(mapping.getTypeConverter(), mmd.getType());
+                if (mapping.getNumberOfColumns() == 1)
                 {
-                    CreationHelper createHelper = row.getSheet().getWorkbook().getCreationHelper();
-                    cell.setCellValue(createHelper.createRichTextString((String) conv.toDatastoreType(value)));
-                    return;
+                    if (datastoreType == String.class)
+                    {
+                        CreationHelper createHelper = row.getSheet().getWorkbook().getCreationHelper();
+                        cell.setCellValue(createHelper.createRichTextString((String)datastoreValue));
+                        return;
+                    }
+                    else if (Number.class.isAssignableFrom(datastoreType))
+                    {
+                        cell.setCellValue((Double)datastoreValue);
+                        return;
+                    }
+                    else if (Boolean.class.isAssignableFrom(datastoreType))
+                    {
+                        cell.setCellValue((Boolean)datastoreValue);
+                        return;
+                    }
+                    else if (Date.class.isAssignableFrom(datastoreType))
+                    {
+                        cell.setCellValue((Date)datastoreValue);
+                        return;
+                    }
+                    else
+                    {
+                        NucleusLogger.DATASTORE_PERSIST.warn("TypeConverter for member " + mmd.getFullFieldName() + " converts to " + datastoreType.getName() + " - not yet supported");
+                    }
                 }
-                else if (Number.class.isAssignableFrom(datastoreType))
+                else
                 {
-                    cell.setCellValue((Double)conv.toDatastoreType(value));
-                    return;
-                }
-                else if (Boolean.class.isAssignableFrom(datastoreType))
-                {
-                    cell.setCellValue((Boolean)conv.toDatastoreType(value));
-                    return;
-                }
-                else if (Date.class.isAssignableFrom(datastoreType))
-                {
-                    cell.setCellValue((Date)conv.toDatastoreType(value));
-                    return;
+                    // TODO Support multicolumn conversion
                 }
             }
             else if (Number.class.isAssignableFrom(mmd.getType()))
@@ -369,8 +372,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
             }
             else if (Character.class.isAssignableFrom(mmd.getType()))
             {
-                CreationHelper createHelper = row.getSheet().getWorkbook().getCreationHelper();
-                cell.setCellValue(createHelper.createRichTextString("" + value));
+                cell.setCellValue(row.getSheet().getWorkbook().getCreationHelper().createRichTextString("" + value));
             }
             else if (Boolean.class.isAssignableFrom(mmd.getType()))
             {
@@ -421,7 +423,6 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                     }
                 }
 
-                // TODO Make use of default TypeConverter for a type before falling back to String/Long
                 TypeConverter strConv = typeMgr.getTypeConverterForType(mmd.getType(), String.class);
                 TypeConverter longConv = typeMgr.getTypeConverterForType(mmd.getType(), Long.class);
                 if (useLong)

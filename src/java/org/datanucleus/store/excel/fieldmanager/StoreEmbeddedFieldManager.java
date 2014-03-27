@@ -1,5 +1,5 @@
 /**********************************************************************
-Copyright (c) 2010 Guido Anzuoni and others. All rights reserved.
+Copyright (c) 2014 Andy Jefferson and others. All rights reserved.
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -13,7 +13,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 Contributors :
-2011 Andy Jefferson - remove lots of duplication from StoreFieldManager
  ...
 ***********************************************************************/
 package org.datanucleus.store.excel.fieldmanager;
@@ -27,10 +26,12 @@ import org.datanucleus.ExecutionContext;
 import org.datanucleus.metadata.AbstractClassMetaData;
 import org.datanucleus.metadata.AbstractMemberMetaData;
 import org.datanucleus.metadata.EmbeddedMetaData;
+import org.datanucleus.metadata.MetaDataUtils;
 import org.datanucleus.metadata.RelationType;
 import org.datanucleus.state.ObjectProvider;
 import org.datanucleus.store.schema.table.MemberColumnMapping;
 import org.datanucleus.store.schema.table.Table;
+import org.datanucleus.util.NucleusLogger;
 
 /**
  * FieldManager to handle the store information for an embedded persistable object into Excel.
@@ -64,41 +65,76 @@ public class StoreEmbeddedFieldManager extends StoreFieldManager
 
     public void storeObjectField(int fieldNumber, Object value)
     {
-        ExecutionContext ec = op.getExecutionContext();
-        ClassLoaderResolver clr = ec.getClassLoaderResolver();
-        EmbeddedMetaData embmd = mmds.get(0).getEmbeddedMetaData();
-    	AbstractMemberMetaData []embMmd = embmd.getMemberMetaData();
-        AbstractMemberMetaData mmd = embMmd[fieldNumber];
+        AbstractMemberMetaData mmd = cmd.getMetaDataForManagedMemberAtAbsolutePosition(fieldNumber);
         if (!isStorable(mmd))
         {
             return;
         }
 
-        RelationType relationType = mmd.getRelationType(op.getExecutionContext().getClassLoaderResolver());
-        if (RelationType.isRelationSingleValued(relationType) && mmd.isEmbedded())
+        ExecutionContext ec = op.getExecutionContext();
+        ClassLoaderResolver clr = ec.getClassLoaderResolver();
+        AbstractMemberMetaData lastMmd = mmds.get(mmds.size()-1);
+        EmbeddedMetaData embmd = mmds.get(0).getEmbeddedMetaData();
+        if (mmds.size() == 1 && embmd != null && embmd.getOwnerMember() != null && embmd.getOwnerMember().equals(mmd.getName()))
         {
-            // Persistable object embedded into this table
-            Class embcls = mmd.getType();
-            AbstractClassMetaData embcmd = ec.getMetaDataManager().getMetaDataForClass(embcls, clr);
-            if (embcmd != null)
+            // Special case of this member being a link back to the owner. TODO Repeat this for nested and their owners
+            if (op != null)
             {
-                ObjectProvider embSM = null;
-                if (value != null)
+                ObjectProvider[] ownerOPs = op.getEmbeddedOwners();
+                if (ownerOPs != null && ownerOPs.length == 1 && value != ownerOPs[0].getObject())
                 {
-                    embSM = ec.findObjectProviderForEmbedded(value, op, mmd);
+                    // Make sure the owner field is set
+                    op.replaceField(fieldNumber, ownerOPs[0].getObject());
                 }
-                else
-                {
-                    embSM = ec.newObjectProviderForEmbedded(embcmd, op, fieldNumber);
-                }
+            }
+            return;
+        }
 
-                List<AbstractMemberMetaData> embMmds = new ArrayList<AbstractMemberMetaData>(mmds);
-                embMmds.add(mmd);
-                embSM.provideFields(embcmd.getAllMemberPositions(), new StoreEmbeddedFieldManager(embSM, row, insert, embMmds, table));
-                return;
+        RelationType relationType = mmd.getRelationType(op.getExecutionContext().getClassLoaderResolver());
+        if (relationType != RelationType.NONE && MetaDataUtils.getInstance().isMemberEmbedded(ec.getMetaDataManager(), clr, mmd, relationType, lastMmd))
+        {
+            // Embedded field
+            if (RelationType.isRelationSingleValued(relationType))
+            {
+                // Persistable object embedded into this table
+                Class embcls = mmd.getType();
+                AbstractClassMetaData embcmd = ec.getMetaDataManager().getMetaDataForClass(embcls, clr);
+                if (embcmd != null)
+                {
+                    ObjectProvider embSM = null;
+                    if (value != null)
+                    {
+                        embSM = ec.findObjectProviderForEmbedded(value, op, mmd);
+                    }
+                    else
+                    {
+                        embSM = ec.newObjectProviderForEmbedded(embcmd, op, fieldNumber);
+                    }
+
+                    List<AbstractMemberMetaData> embMmds = new ArrayList<AbstractMemberMetaData>(mmds);
+                    embMmds.add(mmd);
+                    embSM.provideFields(embcmd.getAllMemberPositions(), new StoreEmbeddedFieldManager(embSM, row, insert, embMmds, table));
+                    return;
+                }
+            }
+        }
+        else
+        {
+            // TODO Embedded Collection
+            NucleusLogger.PERSISTENCE.debug("Field=" + mmd.getFullFieldName() + " not currently supported (embedded), storing as null");
+            return;
+        }
+
+        if (op == null)
+        {
+            // Null the column
+            MemberColumnMapping mapping = getColumnMapping(fieldNumber);
+            for (int i=0;i<mapping.getNumberOfColumns();i++)
+            {
+                // TODO Null the column(s)
             }
         }
 
-        storeObjectFieldInCell(fieldNumber, value, mmd, clr);
+        storeObjectFieldInCell(fieldNumber, value, mmd, clr, relationType);
     }
 }

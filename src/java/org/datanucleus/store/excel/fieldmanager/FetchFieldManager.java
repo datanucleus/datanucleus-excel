@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.datanucleus.ClassLoaderResolver;
 import org.datanucleus.ExecutionContext;
@@ -60,15 +59,14 @@ import org.datanucleus.util.NucleusLogger;
 public class FetchFieldManager extends AbstractFetchFieldManager
 {
     protected Table table;
-
     protected Sheet sheet;
-    protected int row;
+    protected int rowNumber;
 
     public FetchFieldManager(ObjectProvider op, Sheet sheet, int row, Table table)
     {
         super(op);
         this.table = table;
-        this.row = row;
+        this.rowNumber = row;
         this.sheet = sheet;
     }
 
@@ -76,7 +74,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
     {
         super(ec, cmd);
         this.table = table;
-        this.row = row;
+        this.rowNumber = row;
         this.sheet = sheet;
     }
 
@@ -88,8 +86,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
     public boolean fetchBooleanField(int fieldNumber)
     {
         int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
-        Row rrow = sheet.getRow(row);
-        Cell cell = rrow.getCell(index);
+        Cell cell = sheet.getRow(rowNumber).getCell(index);
         if (cell == null)
         {
             return false;
@@ -100,8 +97,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
     public byte fetchByteField(int fieldNumber)
     {
         int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
-        Row rrow = sheet.getRow(row);
-        Cell cell = rrow.getCell(index);
+        Cell cell = sheet.getRow(rowNumber).getCell(index);
         if (cell == null)
         {
             return 0;
@@ -112,8 +108,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
     public char fetchCharField(int fieldNumber)
     {
         int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
-        Row rrow = sheet.getRow(row);
-        Cell cell = rrow.getCell(index);
+        Cell cell = sheet.getRow(rowNumber).getCell(index);
         if (cell == null)
         {
             return 0;
@@ -124,8 +119,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
     public double fetchDoubleField(int fieldNumber)
     {
         int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
-        Row rrow = sheet.getRow(row);
-        Cell cell = rrow.getCell(index);
+        Cell cell = sheet.getRow(rowNumber).getCell(index);
         if (cell == null)
         {
             return 0;
@@ -136,8 +130,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
     public float fetchFloatField(int fieldNumber)
     {
         int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
-        Row rrow = sheet.getRow(row);
-        Cell cell = rrow.getCell(index);
+        Cell cell = sheet.getRow(rowNumber).getCell(index);
         if (cell == null)
         {
             return 0;
@@ -148,8 +141,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
     public int fetchIntField(int fieldNumber)
     {
         int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
-        Row rrow = sheet.getRow(row);
-        Cell cell = rrow.getCell(index);
+        Cell cell = sheet.getRow(rowNumber).getCell(index);
         if (cell == null)
         {
             return 0;
@@ -160,8 +152,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
     public long fetchLongField(int fieldNumber)
     {
         int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
-        Row rrow = sheet.getRow(row);
-        Cell cell = rrow.getCell(index);
+        Cell cell = sheet.getRow(rowNumber).getCell(index);
         if (cell == null)
         {
             return 0;
@@ -172,8 +163,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
     public short fetchShortField(int fieldNumber)
     {
         int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
-        Row rrow = sheet.getRow(row);
-        Cell cell = rrow.getCell(index);
+        Cell cell = sheet.getRow(rowNumber).getCell(index);
         if (cell == null)
         {
             return 0;
@@ -184,8 +174,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
     public String fetchStringField(int fieldNumber)
     {
         int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
-        Row rrow = sheet.getRow(row);
-        Cell cell = rrow.getCell(index);
+        Cell cell = sheet.getRow(rowNumber).getCell(index);
         if (cell == null)
         {
             return null;
@@ -210,7 +199,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
                 embMmds.add(mmd);
                 AbstractClassMetaData embCmd = ec.getMetaDataManager().getMetaDataForClass(mmd.getType(), clr);
                 ObjectProvider embOP = ec.newObjectProviderForEmbedded(embCmd, op, fieldNumber);
-                FieldManager fetchEmbFM = new FetchEmbeddedFieldManager(embOP, sheet, row, embMmds, table);
+                FieldManager fetchEmbFM = new FetchEmbeddedFieldManager(embOP, sheet, rowNumber, embMmds, table);
                 embOP.replaceFields(embCmd.getAllMemberPositions(), fetchEmbFM);
                 return embOP.getObject();
             }
@@ -233,43 +222,51 @@ public class FetchFieldManager extends AbstractFetchFieldManager
         }
 
         int index = mapping.getColumn(0).getPosition();
-        Row rrow = sheet.getRow(row);
-        Cell cell = rrow.getCell(index);
+        Cell cell = sheet.getRow(rowNumber).getCell(index);
         if (cell == null)
         {
             return null;
         }
         else if (relationType == RelationType.NONE)
         {
-            // TODO Use converter from "mapping"
-            if (mmd.getTypeConverterName() != null)
+            if (mapping.getTypeConverter() != null)
             {
-                // User-defined type converter
-                Object value = null;
-                TypeConverter conv = ec.getNucleusContext().getTypeManager().getTypeConverterForName(mmd.getTypeConverterName());
-                Class datastoreType = TypeConverterHelper.getDatastoreTypeForTypeConverter(conv, mmd.getType());
-                if (datastoreType == String.class)
+                if (mapping.getNumberOfColumns() == 1)
                 {
-                    value = conv.toMemberType(cell.getRichStringCellValue().getString());
-                }
-                else if (Number.class.isAssignableFrom(datastoreType))
-                {
-                    value = conv.toMemberType(cell.getNumericCellValue());
-                }
-                else if (Boolean.class.isAssignableFrom(datastoreType))
-                {
-                    value = conv.toMemberType(cell.getBooleanCellValue());
-                }
-                else if (Date.class.isAssignableFrom(datastoreType))
-                {
-                    value = conv.toMemberType(cell.getDateCellValue());
-                }
+                    Object value = null;
+                    TypeConverter conv = mapping.getTypeConverter();
+                    Class datastoreType = TypeConverterHelper.getDatastoreTypeForTypeConverter(conv, mmd.getType());
+                    if (datastoreType == String.class)
+                    {
+                        value = conv.toMemberType(cell.getRichStringCellValue().getString());
+                    }
+                    else if (Number.class.isAssignableFrom(datastoreType))
+                    {
+                        value = conv.toMemberType(cell.getNumericCellValue());
+                    }
+                    else if (Boolean.class.isAssignableFrom(datastoreType))
+                    {
+                        value = conv.toMemberType(cell.getBooleanCellValue());
+                    }
+                    else if (Date.class.isAssignableFrom(datastoreType))
+                    {
+                        value = conv.toMemberType(cell.getDateCellValue());
+                    }
+                    else
+                    {
+                        NucleusLogger.DATASTORE_PERSIST.warn("TypeConverter for member " + mmd.getFullFieldName() + " converts to " + datastoreType.getName() + " - not yet supported");
+                    }
 
-                if (op != null)
-                {
-                    return op.wrapSCOField(fieldNumber, value, false, false, true);
+                    if (op != null)
+                    {
+                        return op.wrapSCOField(fieldNumber, value, false, false, true);
+                    }
+                    return value;
                 }
-                return value;
+                else
+                {
+                    
+                }
             }
             else if (Date.class.isAssignableFrom(mmd.getType()))
             {
@@ -408,7 +405,6 @@ public class FetchFieldManager extends AbstractFetchFieldManager
 
             // See if we can persist it using built-in converters
             Object value = null;
-            // TODO Make use of default TypeConverter for a type before falling back to String/Long
             TypeConverter strConv = ec.getNucleusContext().getTypeManager().getTypeConverterForType(mmd.getType(), String.class);
             TypeConverter longConv = ec.getNucleusContext().getTypeManager().getTypeConverterForType(mmd.getType(), Long.class);
             if (useLong && longConv != null)
