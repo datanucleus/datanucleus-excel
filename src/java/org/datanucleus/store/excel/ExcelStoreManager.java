@@ -19,15 +19,22 @@ package org.datanucleus.store.excel;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import org.apache.poi.ss.usermodel.Workbook;
 import org.datanucleus.ClassLoaderResolver;
 import org.datanucleus.PersistenceNucleusContext;
+import org.datanucleus.metadata.ClassMetaData;
+import org.datanucleus.metadata.ClassPersistenceModifier;
 import org.datanucleus.store.AbstractStoreManager;
+import org.datanucleus.store.StoreData;
 import org.datanucleus.store.StoreManager;
+import org.datanucleus.store.connection.ManagedConnection;
 import org.datanucleus.store.schema.SchemaAwareStoreManager;
+import org.datanucleus.store.schema.table.CompleteClassTable;
 import org.datanucleus.util.ClassUtils;
 
 /**
@@ -63,6 +70,67 @@ public abstract class ExcelStoreManager extends AbstractStoreManager implements 
         set.add(StoreManager.OPTION_ORM_EMBEDDED_PC);
         set.add(StoreManager.OPTION_TXN_ISOLATION_READ_COMMITTED);
         return set;
+    }
+
+    public void manageClasses(ClassLoaderResolver clr, String... classNames)
+    {
+        if (classNames == null)
+        {
+            return;
+        }
+
+        ManagedConnection mconn = getConnection(-1);
+        try
+        {
+            Workbook wb = (Workbook)mconn.getConnection();
+            manageClasses(classNames, clr, wb);
+        }
+        finally
+        {
+            mconn.release();
+        }
+    }
+
+    public void manageClasses(String[] classNames, ClassLoaderResolver clr, Workbook wb)
+    {
+        if (classNames == null)
+        {
+            return;
+        }
+
+        // Filter out any "simple" type classes
+        String[] filteredClassNames = getNucleusContext().getTypeManager().filterOutSupportedSecondClassNames(classNames);
+
+        // Find the ClassMetaData for these classes and all referenced by these classes
+        Iterator iter = getMetaDataManager().getReferencedClasses(filteredClassNames, clr).iterator();
+        while (iter.hasNext())
+        {
+            ClassMetaData cmd = (ClassMetaData)iter.next();
+            if (cmd.getPersistenceModifier() == ClassPersistenceModifier.PERSISTENCE_CAPABLE && !cmd.isEmbeddedOnly())
+            {
+                if (cmd.isAbstract())
+                {
+                    continue;
+                }
+
+                if (!storeDataMgr.managesClass(cmd.getFullClassName()))
+                {
+                    StoreData sd = storeDataMgr.get(cmd.getFullClassName());
+                    if (sd == null)
+                    {
+                        CompleteClassTable table = new CompleteClassTable(this, cmd, new SchemaVerifierImpl(this, cmd, clr));
+                        sd = newStoreData(cmd, clr);
+                        sd.addProperty("tableObject", table);
+                        registerStoreData(sd);
+                    }
+
+                    // Create schema for class
+                    Set<String> clsNameSet = new HashSet<String>();
+                    clsNameSet.add(cmd.getFullClassName());
+                    schemaHandler.createSchemaForClasses(clsNameSet, null, wb);
+                }
+            }
+        }
     }
 
     public void createSchema(String schemaName, Properties props)

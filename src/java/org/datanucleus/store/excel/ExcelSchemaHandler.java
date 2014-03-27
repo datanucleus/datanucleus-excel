@@ -51,10 +51,15 @@ public class ExcelSchemaHandler extends AbstractStoreSchemaHandler
     @Override
     public void createSchemaForClasses(Set<String> classNames, Properties props, Object connection)
     {
-        ManagedConnection mconn = storeMgr.getConnection(-1);
+        Workbook wb = (Workbook)connection;
+        ManagedConnection mconn = null;
         try
         {
-            Workbook wb = (Workbook) mconn.getConnection();
+            if (wb == null)
+            {
+                mconn = storeMgr.getConnection(-1);
+                wb = (Workbook)mconn.getConnection();
+            }
 
             Iterator<String> classIter = classNames.iterator();
             ClassLoaderResolver clr = storeMgr.getNucleusContext().getClassLoaderResolver(null);
@@ -83,7 +88,10 @@ public class ExcelSchemaHandler extends AbstractStoreSchemaHandler
         }
         finally
         {
-            mconn.release();
+            if (mconn != null)
+            {
+                mconn.release();
+            }
         }
     }
 
@@ -93,10 +101,15 @@ public class ExcelSchemaHandler extends AbstractStoreSchemaHandler
     @Override
     public void deleteSchemaForClasses(Set<String> classNames, Properties props, Object connection)
     {
-        ManagedConnection mconn = storeMgr.getConnection(-1);
+        Workbook wb = (Workbook)connection;
+        ManagedConnection mconn = null;
         try
         {
-            Workbook wb = (Workbook) mconn.getConnection();
+            if (wb == null)
+            {
+                mconn = storeMgr.getConnection(-1);
+                wb = (Workbook)mconn.getConnection();
+            }
 
             Iterator<String> classIter = classNames.iterator();
             ClassLoaderResolver clr = storeMgr.getNucleusContext().getClassLoaderResolver(null);
@@ -122,7 +135,10 @@ public class ExcelSchemaHandler extends AbstractStoreSchemaHandler
         }
         finally
         {
-            mconn.release();
+            if (mconn != null)
+            {
+                mconn.release();
+            }
         }
     }
 

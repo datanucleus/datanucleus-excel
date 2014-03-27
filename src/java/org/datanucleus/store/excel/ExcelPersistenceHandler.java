@@ -23,7 +23,6 @@ import java.util.Date;
 import java.util.Iterator;
 
 import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -167,26 +166,18 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                 // Set the datastore identity column value
                 int idCellNum = (int)ExcelUtils.getColumnIndexForFieldOfClass(cmd, -1);
                 Object key = ((OID)op.getInternalObjectId()).getKeyValue();
+                Cell idCell = row.getCell(idCellNum);
+                if (idCell == null)
+                {
+                    idCell = row.createCell(idCellNum);
+                }
                 if (key instanceof String)
                 {
-                    Cell idCell = row.getCell(idCellNum);
-                    if (idCell == null)
-                    {
-                        idCell = row.createCell(idCellNum);
-                    }
-                    String idValue = (String)key;
-                    CreationHelper createHelper = wb.getCreationHelper();
-                    idCell.setCellValue(createHelper.createRichTextString(idValue));
+                    idCell.setCellValue(wb.getCreationHelper().createRichTextString((String)key));
                 }
                 else
                 {
-                    Cell idCell = row.getCell(idCellNum);
-                    if (idCell == null)
-                    {
-                        idCell = row.createCell(idCellNum);
-                    }
-                    long idValue = ((Long)key).longValue();
-                    idCell.setCellValue(idValue);
+                    idCell.setCellValue(((Long)key).longValue());
                 }
             }
 
@@ -419,12 +410,11 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                 {
                     // Deleting top row which is last row so just remove all cells and leave row
                     // otherwise Apache POI throws an ArrayIndexOutOfBoundsException
-                    Row rrow = sheet.getRow(rowId);
-                    Iterator it = rrow.cellIterator();
-                    while(it.hasNext())
+                    Row row = sheet.getRow(rowId);
+                    Iterator<Cell> it = row.cellIterator();
+                    while (it.hasNext())
                     {
-                        Cell cell = (Cell) it.next();
-                        rrow.removeCell(cell);
+                        row.removeCell(it.next());
                     }
                 }
                 else
@@ -535,13 +525,11 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                 Cell cell = row.getCell((int)verColNo);
                 if (vermd.getVersionStrategy() == VersionStrategy.VERSION_NUMBER)
                 {
-                    long val = (long)cell.getNumericCellValue();
-                    op.setVersion(Long.valueOf(val));
+                    op.setVersion(Long.valueOf((long)cell.getNumericCellValue()));
                 }
                 else if (vermd.getVersionStrategy() == VersionStrategy.DATE_TIME)
                 {
-                    Date val = cell.getDateCellValue();
-                    op.setVersion(val);
+                    op.setVersion(cell.getDateCellValue());
                 }
             }
         }
