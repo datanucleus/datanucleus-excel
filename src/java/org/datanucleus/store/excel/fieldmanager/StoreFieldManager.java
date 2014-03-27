@@ -21,16 +21,20 @@ Contributors :
 package org.datanucleus.store.excel.fieldmanager;
 
 import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.Row;
 import org.datanucleus.ClassLoaderResolver;
+import org.datanucleus.ExecutionContext;
+import org.datanucleus.exceptions.NucleusException;
 import org.datanucleus.exceptions.NucleusUserException;
 import org.datanucleus.identity.IdentityUtils;
 import org.datanucleus.metadata.AbstractClassMetaData;
@@ -40,12 +44,14 @@ import org.datanucleus.metadata.IdentityType;
 import org.datanucleus.metadata.MetaDataUtils;
 import org.datanucleus.metadata.RelationType;
 import org.datanucleus.state.ObjectProvider;
-import org.datanucleus.store.excel.ExcelUtils;
 import org.datanucleus.store.fieldmanager.AbstractStoreFieldManager;
+import org.datanucleus.store.schema.table.MemberColumnMapping;
+import org.datanucleus.store.schema.table.Table;
 import org.datanucleus.store.types.TypeManager;
 import org.datanucleus.store.types.converters.TypeConverter;
 import org.datanucleus.store.types.converters.TypeConverterHelper;
 import org.datanucleus.util.Base64;
+import org.datanucleus.util.ClassUtils;
 import org.datanucleus.util.NucleusLogger;
 
 /**
@@ -53,40 +59,53 @@ import org.datanucleus.util.NucleusLogger;
  */
 public class StoreFieldManager extends AbstractStoreFieldManager
 {
+    protected final Table table;
     protected final Row row;
 
-    public StoreFieldManager(ObjectProvider op, Row row, boolean insert)
+    public StoreFieldManager(ExecutionContext ec, AbstractClassMetaData cmd, Row row, boolean insert, Table table)
+    {
+        super(ec, cmd, insert);
+        this.row = row;
+        this.table = table;
+    }
+
+    public StoreFieldManager(ObjectProvider op, Row row, boolean insert, Table table)
     {
         super(op, insert);
         this.row = row;
+        this.table = table;
 
-        // Add PK field(s) cell, so that the row is detected by ExcelUtils.getNumberOfRowsInSheetOfWorkbook
-        AbstractClassMetaData cmd = op.getClassMetaData();
-        if (cmd.getIdentityType() == IdentityType.APPLICATION)
+        if (!op.isEmbedded())
         {
-            int[] pkFieldNumbers = cmd.getPKMemberPositions();
-            for (int j=0;j<pkFieldNumbers.length;j++)
+            // Add PK field(s) cell, so that the row is detected by ExcelUtils.getNumberOfRowsInSheetOfWorkbook
+            AbstractClassMetaData cmd = op.getClassMetaData();
+            if (cmd.getIdentityType() == IdentityType.APPLICATION)
             {
-                int colNumber = (int)ExcelUtils.getColumnIndexForFieldOfClass(cmd, pkFieldNumbers[j]);
-                if (row.getCell(colNumber) == null)
+                int[] pkFieldNumbers = cmd.getPKMemberPositions();
+                for (int j=0;j<pkFieldNumbers.length;j++)
                 {
-                    row.createCell(colNumber);
+                    AbstractMemberMetaData pkMmd = cmd.getMetaDataForManagedMemberAtAbsolutePosition(pkFieldNumbers[j]);
+                    int colNumber = table.getMemberColumnMappingForMember(pkMmd).getColumn(0).getPosition();
+                    if (row.getCell(colNumber) == null)
+                    {
+                        row.createCell(colNumber);
+                    }
                 }
             }
-        }
-        else if (op.getClassMetaData().getIdentityType() == IdentityType.DATASTORE)
-        {
-            int datastoreIdColNumber = (int)ExcelUtils.getColumnIndexForFieldOfClass(cmd, -1);
-            if (row.getCell(datastoreIdColNumber) == null)
+            else if (op.getClassMetaData().getIdentityType() == IdentityType.DATASTORE)
             {
-                row.createCell(datastoreIdColNumber);
+                int datastoreIdColNumber = table.getDatastoreIdColumn().getPosition();
+                if (row.getCell(datastoreIdColNumber) == null)
+                {
+                    row.createCell(datastoreIdColNumber);
+                }
             }
         }
     }
 
-    protected int getColumnIndexForMember(int memberNumber)
+    protected MemberColumnMapping getColumnMapping(int fieldNumber)
     {
-        return ExcelUtils.getColumnIndexForFieldOfClass(op.getClassMetaData(), memberNumber);
+        return table.getMemberColumnMappingForMember(cmd.getMetaDataForManagedMemberAtAbsolutePosition(fieldNumber));
     }
 
     public void storeBooleanField(int fieldNumber, boolean value)
@@ -95,7 +114,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         {
             return;
         }
-        int index = getColumnIndexForMember(fieldNumber);
+        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
         Cell cell = row.getCell((int)index);
         if (cell == null)
         {
@@ -110,7 +129,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         {
             return;
         }
-        int index = getColumnIndexForMember(fieldNumber);
+        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
         Cell cell = row.getCell((int)index);
         if (cell == null)
         {
@@ -125,7 +144,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         {
             return;
         }
-        int index = getColumnIndexForMember(fieldNumber);
+        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
         Cell cell = row.getCell((int)index);
         if (cell == null)
         {
@@ -140,7 +159,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         {
             return;
         }
-        int index = getColumnIndexForMember(fieldNumber);
+        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
         Cell cell = row.getCell((int)index);
         if (cell == null)
         {
@@ -155,7 +174,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         {
             return;
         }
-        int index = getColumnIndexForMember(fieldNumber);
+        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
         Cell cell = row.getCell((int)index);
         if (cell == null)
         {
@@ -170,7 +189,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         {
             return;
         }
-        int index = getColumnIndexForMember(fieldNumber);
+        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
         Cell cell = row.getCell((int)index);
         if (cell == null)
         {
@@ -185,7 +204,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         {
             return;
         }
-        int index = getColumnIndexForMember(fieldNumber);
+        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
         Cell cell = row.getCell((int)index);
         if (cell == null)
         {
@@ -200,7 +219,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         {
             return;
         }
-        int index = getColumnIndexForMember(fieldNumber);
+        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
         Cell cell = row.getCell((int)index);
         if (cell == null)
         {
@@ -215,7 +234,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         {
             return;
         }
-        int index = getColumnIndexForMember(fieldNumber);
+        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
         Cell cell = row.getCell((int)index);
         if (cell == null)
         {
@@ -243,36 +262,49 @@ public class StoreFieldManager extends AbstractStoreFieldManager
 
         // Special cases
         RelationType relationType = mmd.getRelationType(clr);
-        if (relationType != RelationType.NONE)
+        if (relationType != RelationType.NONE && MetaDataUtils.getInstance().isMemberEmbedded(ec.getMetaDataManager(), clr, mmd, relationType, null))
         {
-            if (MetaDataUtils.getInstance().isMemberEmbedded(ec.getMetaDataManager(), clr, mmd, relationType, null))
+            // Embedded field
+            if (RelationType.isRelationSingleValued(relationType))
             {
-                // Embedded field
-                if (RelationType.isRelationSingleValued(relationType))
+                AbstractClassMetaData embCmd = ec.getMetaDataManager().getMetaDataForClass(mmd.getType(), clr);
+                int[] embMmdPosns = embCmd.getAllMemberPositions();
+                List<AbstractMemberMetaData> embMmds = new ArrayList<AbstractMemberMetaData>();
+                embMmds.add(mmd);
+                if (value == null)
                 {
-                    // Persistable object embedded into this table
-                    Class embcls = mmd.getType();
-                    AbstractClassMetaData embcmd = ec.getMetaDataManager().getMetaDataForClass(embcls, clr);
-                    if (embcmd != null) 
+                    // Store null in all columns for the embedded (and nested embedded) object(s)
+                    StoreEmbeddedFieldManager storeEmbFM = new StoreEmbeddedFieldManager(ec, embCmd, row, insert, embMmds, table);
+                    for (int i=0;i<embMmdPosns.length;i++)
                     {
-                        ObjectProvider embSM = null;
-                        if (value != null)
+                        AbstractMemberMetaData embMmd = embCmd.getMetaDataForManagedMemberAtAbsolutePosition(embMmdPosns[i]);
+                        if (String.class.isAssignableFrom(embMmd.getType()) || embMmd.getType().isPrimitive() || ClassUtils.isPrimitiveWrapperType(mmd.getTypeName()))
                         {
-                            embSM = ec.findObjectProviderForEmbedded(value, op, mmd);
+                            // Store a null for any primitive/wrapper/String fields
+                            List<AbstractMemberMetaData> colEmbMmds = new ArrayList<AbstractMemberMetaData>(embMmds);
+                            colEmbMmds.add(embMmd);
+                            MemberColumnMapping mapping = table.getMemberColumnMappingForEmbeddedMember(colEmbMmds);
+                            for (int j=0;j<mapping.getNumberOfColumns();j++)
+                            {
+                                // TODO Put null in this column
+                            }
                         }
-                        else
+                        else if (Object.class.isAssignableFrom(embMmd.getType()))
                         {
-                            embSM = ec.newObjectProviderForEmbedded(embcmd, op, fieldNumber);
+                            storeEmbFM.storeObjectField(embMmdPosns[i], null);
                         }
-
-                        embSM.provideFields(embcmd.getAllMemberPositions(), new StoreEmbeddedFieldManager(embSM, row, mmd, insert));
-                        return;
                     }
+                    return;
                 }
-                else if (RelationType.isRelationMultiValued(relationType))
-                {
-                    throw new NucleusUserException("Dont support embedded multi-valued field at " + mmd.getFullFieldName() + " with Excel");
-                }
+
+                ObjectProvider embOP = ec.findObjectProviderForEmbedded(value, op, mmd);
+                StoreEmbeddedFieldManager storeEmbFM = new StoreEmbeddedFieldManager(embOP, row, insert, embMmds, table);
+                embOP.provideFields(embMmdPosns, storeEmbFM);
+                return;
+            }
+            else if (RelationType.isRelationMultiValued(relationType))
+            {
+                throw new NucleusUserException("Dont support embedded multi-valued field at " + mmd.getFullFieldName() + " with Excel");
             }
         }
 
@@ -281,19 +313,28 @@ public class StoreFieldManager extends AbstractStoreFieldManager
 
     protected void storeObjectFieldInCell(int fieldNumber, Object value, AbstractMemberMetaData mmd, ClassLoaderResolver clr)
     {
-        RelationType relationType = mmd.getRelationType(clr);
-        int index = getColumnIndexForMember(fieldNumber);
+        MemberColumnMapping mapping = getColumnMapping(fieldNumber);
+        if (mapping.getNumberOfColumns() > 1)
+        {
+            // TODO Support multicolumn mappings
+            throw new NucleusException("Dont yet support members being mapped to multiple columns : " + mapping.getMemberMetaData().getFullFieldName());
+        }
+
+        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
         Cell cell = row.getCell((int)index);
         if (cell == null)
         {
             cell = row.createCell((int)index);
         }
+
+        RelationType relationType = mmd.getRelationType(clr);
         if (value == null)
         {
             row.removeCell(cell);
         }
         else if (relationType == RelationType.NONE)
         {
+            // TODO Use converter from "mapping"
             if (mmd.getTypeConverterName() != null)
             {
                 // User-defined converter

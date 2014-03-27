@@ -45,6 +45,7 @@ import org.datanucleus.store.connection.ManagedConnection;
 import org.datanucleus.store.excel.fieldmanager.FetchFieldManager;
 import org.datanucleus.store.excel.fieldmanager.StoreFieldManager;
 import org.datanucleus.store.fieldmanager.DeleteFieldManager;
+import org.datanucleus.store.schema.table.Table;
 import org.datanucleus.util.Localiser;
 import org.datanucleus.util.NucleusLogger;
 import org.datanucleus.util.StringUtils;
@@ -93,21 +94,6 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
         assertReadOnlyForUpdateOfObject(op);
 
         AbstractClassMetaData cmd = op.getClassMetaData();
-        if (cmd.getIdentityType() == IdentityType.APPLICATION || cmd.getIdentityType() == IdentityType.DATASTORE)
-        {
-            // Enforce uniqueness of datastore rows
-            try
-            {
-                locateObject(op);
-                throw new NucleusUserException(LOCALISER_EXCEL.msg("Excel.Insert.ObjectWithIdAlreadyExists",
-                    op.getObjectAsPrintable(), op.getInternalObjectId()));
-            }
-            catch (NucleusObjectNotFoundException onfe)
-            {
-                // Do nothing since object with this id doesn't exist
-            }
-        }
-
         ExecutionContext ec = op.getExecutionContext();
         ManagedConnection mconn = storeMgr.getConnection(ec);
         try
@@ -120,8 +106,30 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
             }
 
             Workbook wb = (Workbook) mconn.getConnection();
+            if (!storeMgr.managesClass(cmd.getFullClassName()))
+            {
+                // Make sure schema exists, using this connection
+                ((ExcelStoreManager)storeMgr).manageClasses(new String[] {cmd.getFullClassName()}, ec.getClassLoaderResolver(), wb);
+            }
+            Table table = (Table) ec.getStoreManager().getStoreDataForClass(cmd.getFullClassName()).getProperty("tableObject");
+
+            if (cmd.getIdentityType() == IdentityType.APPLICATION || cmd.getIdentityType() == IdentityType.DATASTORE)
+            {
+                // Enforce uniqueness of datastore rows
+                try
+                {
+                    locateObject(op);
+                    throw new NucleusUserException(LOCALISER_EXCEL.msg("Excel.Insert.ObjectWithIdAlreadyExists",
+                        op.getObjectAsPrintable(), op.getInternalObjectId()));
+                }
+                catch (NucleusObjectNotFoundException onfe)
+                {
+                    // Do nothing since object with this id doesn't exist
+                }
+            }
+
             int[] fieldNumbers = cmd.getAllMemberPositions();
-            String sheetName = storeMgr.getNamingFactory().getTableName(cmd);
+            String sheetName = table.getIdentifier();
             Sheet sheet = wb.getSheet(sheetName);
             int rowNum = 0;
             if (sheet == null)
@@ -148,7 +156,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                 row = sheet.createRow(rowNum);
             }
 
-            op.provideFields(fieldNumbers, new StoreFieldManager(op, row, true));
+            op.provideFields(fieldNumbers, new StoreFieldManager(op, row, true, table));
 
             if (NucleusLogger.DATASTORE_PERSIST.isDebugEnabled())
             {
@@ -164,7 +172,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
             if (cmd.getIdentityType() == IdentityType.DATASTORE)
             {
                 // Set the datastore identity column value
-                int idCellNum = (int)ExcelUtils.getColumnIndexForFieldOfClass(cmd, -1);
+                int idCellNum = table.getDatastoreIdColumn().getPosition();
                 Object key = ((OID)op.getInternalObjectId()).getKeyValue();
                 Cell idCell = row.getCell(idCellNum);
                 if (idCell == null)
@@ -185,7 +193,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
             if (vermd != null)
             {
                 // versioned object so set its version
-                int verCellNum = (int)ExcelUtils.getColumnIndexForFieldOfClass(cmd, -2);
+                int verCellNum = table.getVersionColumn().getPosition();
                 Cell verCell = row.getCell(verCellNum);
                 if (verCell == null)
                 {
@@ -246,7 +254,14 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
         {
             AbstractClassMetaData cmd = op.getClassMetaData();
             Workbook wb = (Workbook) mconn.getConnection();
-            final Sheet sheet = ExcelUtils.getSheetForClass(op, wb);
+            if (!storeMgr.managesClass(cmd.getFullClassName()))
+            {
+                // Make sure schema exists, using this connection
+                ((ExcelStoreManager)storeMgr).manageClasses(new String[] {cmd.getFullClassName()}, ec.getClassLoaderResolver(), wb);
+            }
+            Table table = (Table) ec.getStoreManager().getStoreDataForClass(cmd.getFullClassName()).getProperty("tableObject");
+
+            final Sheet sheet = ExcelUtils.getSheetForClass(op, wb, table);
 
             int[] updatedFieldNums = fieldNumbers;
             Object nextVersion = null;
@@ -313,14 +328,13 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
             }
 
             // Update the row in the worksheet
-            final Row row = sheet.getRow(ExcelUtils.getRowNumberForObjectInWorkbook(op, wb, true));
+            final Row row = sheet.getRow(ExcelUtils.getRowNumberForObjectInWorkbook(op, wb, true, table));
             if (row == null)
             {
-                String sheetName = storeMgr.getNamingFactory().getTableName(cmd);
                 throw new NucleusDataStoreException(LOCALISER_EXCEL.msg("Excel.RowNotFoundForSheetForWorkbook",
-                    sheetName, StringUtils.toJVMIDString(op.getInternalObjectId())));
+                    table.getIdentifier(), StringUtils.toJVMIDString(op.getInternalObjectId())));
             }
-            op.provideFields(updatedFieldNums, new StoreFieldManager(op, row, false));
+            op.provideFields(updatedFieldNums, new StoreFieldManager(op, row, false, table));
 
             if (vermd != null)
             {
@@ -332,8 +346,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                         op.getObjectAsPrintable(), op.getInternalObjectId(), "" + nextVersion));
                 }
 
-                int verCellNum = (int)ExcelUtils.getColumnIndexForFieldOfClass(cmd, -2);
-                Cell verCell = row.getCell(verCellNum);
+                Cell verCell = row.getCell(table.getVersionColumn().getPosition());
                 if (nextVersion instanceof Long)
                 {
                     verCell.setCellValue(((Long)nextVersion).longValue());
@@ -379,13 +392,14 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
         try
         {
             AbstractClassMetaData cmd = op.getClassMetaData();
-            Workbook wb = (Workbook) mconn.getConnection();
-            final Sheet sheet = ExcelUtils.getSheetForClass(op, wb);
-
             if (cmd.isVersioned())
             {
                 NucleusLogger.PERSISTENCE.warn("This datastore doesn't support optimistic version checks since the datastore file is for a single-connection");
             }
+
+            Workbook wb = (Workbook) mconn.getConnection();
+            Table table = (Table) ec.getStoreManager().getStoreDataForClass(op.getClassMetaData().getFullClassName()).getProperty("tableObject");
+            final Sheet sheet = ExcelUtils.getSheetForClass(op, wb, table);
 
             // Invoke any cascade deletion
             op.loadUnloadedFields();
@@ -399,7 +413,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                     op.getObjectAsPrintable(), op.getInternalObjectId()));
             }
 
-            int rowId = ExcelUtils.getRowNumberForObjectInWorkbook(op, wb, false);
+            int rowId = ExcelUtils.getRowNumberForObjectInWorkbook(op, wb, false, table);
             if (rowId < 0)
             {
                 throw new NucleusObjectNotFoundException("object not found", op.getObject());
@@ -453,7 +467,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
      */
     public void fetchObject(final ObjectProvider op, int[] fieldNumbers)
     {
-        AbstractClassMetaData acmd = op.getClassMetaData();
+        AbstractClassMetaData cmd = op.getClassMetaData();
         if (NucleusLogger.PERSISTENCE.isDebugEnabled())
         {
             // Debug information about what we are retrieving
@@ -466,7 +480,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                 {
                     str.append(",");
                 }
-                str.append(acmd.getMetaDataForManagedMemberAtAbsolutePosition(fieldNumbers[i]).getName());
+                str.append(cmd.getMetaDataForManagedMemberAtAbsolutePosition(fieldNumbers[i]).getName());
             }
             str.append("]");
             NucleusLogger.PERSISTENCE.debug(str.toString());
@@ -477,7 +491,8 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
         try
         {
             Workbook wb = (Workbook) mconn.getConnection();
-            final Sheet sheet = ExcelUtils.getSheetForClass(op, wb);
+            Table table = (Table) ec.getStoreManager().getStoreDataForClass(cmd.getFullClassName()).getProperty("tableObject");
+            final Sheet sheet = ExcelUtils.getSheetForClass(op, wb, table);
 
             long startTime = System.currentTimeMillis();
             if (NucleusLogger.DATASTORE_RETRIEVE.isDebugEnabled())
@@ -486,17 +501,16 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                     op.getObjectAsPrintable(), op.getInternalObjectId()));
             }
 
-            int rowNumber = ExcelUtils.getRowNumberForObjectInWorkbook(op, wb, false);
+            int rowNumber = ExcelUtils.getRowNumberForObjectInWorkbook(op, wb, false, table);
             if (rowNumber < 0)
             {
                 throw new NucleusObjectNotFoundException("object not found", op.getObject());
             }
-            op.replaceFields(fieldNumbers, new FetchFieldManager(op, sheet, rowNumber));
+            op.replaceFields(fieldNumbers, new FetchFieldManager(op, sheet, rowNumber, table));
 
             if (NucleusLogger.DATASTORE_RETRIEVE.isDebugEnabled())
             {
-                NucleusLogger.DATASTORE_RETRIEVE.debug(LOCALISER_EXCEL.msg("Excel.ExecutionTime", 
-                    (System.currentTimeMillis() - startTime)));
+                NucleusLogger.DATASTORE_RETRIEVE.debug(LOCALISER_EXCEL.msg("Excel.ExecutionTime", (System.currentTimeMillis() - startTime)));
             }
             if (ec.getStatistics() != null)
             {
@@ -504,7 +518,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                 ec.getStatistics().incrementFetchCount();
             }
 
-            VersionMetaData vermd = acmd.getVersionMetaDataForClass();
+            VersionMetaData vermd = cmd.getVersionMetaDataForClass();
             if (vermd != null && op.getTransactionalVersion() == null)
             {
                 // Object has no version set so update it from this fetch
@@ -512,13 +526,12 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                 if (vermd.getFieldName() == null)
                 {
                     // Surrogate version
-                    verColNo = ExcelUtils.getColumnIndexForFieldOfClass(acmd, -2);
+                    verColNo = table.getVersionColumn().getPosition();
                 }
                 else
                 {
                     // Field-based version
-                    verColNo = ExcelUtils.getColumnIndexForFieldOfClass(acmd, 
-                        acmd.getAbsolutePositionOfMember(vermd.getFieldName()));
+                    verColNo = table.getMemberColumnMappingForMember(cmd.getMetaDataForMember(vermd.getFieldName())).getColumn(0).getPosition();
                 }
 
                 Row row = sheet.getRow(rowNumber);
@@ -563,7 +576,8 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
         try
         {
             Workbook wb = (Workbook) mconn.getConnection();
-            int rownum = ExcelUtils.getRowNumberForObjectInWorkbook(op, wb, false);
+            Table table = (Table) ec.getStoreManager().getStoreDataForClass(op.getClassMetaData().getFullClassName()).getProperty("tableObject");
+            int rownum = ExcelUtils.getRowNumberForObjectInWorkbook(op, wb, false, table);
             if (ec.getStatistics() != null)
             {
                 ec.getStatistics().incrementNumReads();

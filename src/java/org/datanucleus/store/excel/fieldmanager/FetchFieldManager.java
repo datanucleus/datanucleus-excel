@@ -21,9 +21,11 @@ package org.datanucleus.store.excel.fieldmanager;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.poi.ss.usermodel.Cell;
@@ -41,8 +43,10 @@ import org.datanucleus.metadata.ColumnMetaData;
 import org.datanucleus.metadata.MetaDataUtils;
 import org.datanucleus.metadata.RelationType;
 import org.datanucleus.state.ObjectProvider;
-import org.datanucleus.store.excel.ExcelUtils;
 import org.datanucleus.store.fieldmanager.AbstractFetchFieldManager;
+import org.datanucleus.store.fieldmanager.FieldManager;
+import org.datanucleus.store.schema.table.MemberColumnMapping;
+import org.datanucleus.store.schema.table.Table;
 import org.datanucleus.store.types.SCOUtils;
 import org.datanucleus.store.types.converters.TypeConverter;
 import org.datanucleus.store.types.converters.TypeConverterHelper;
@@ -55,31 +59,35 @@ import org.datanucleus.util.NucleusLogger;
  */
 public class FetchFieldManager extends AbstractFetchFieldManager
 {
+    protected Table table;
+
     protected Sheet sheet;
     protected int row;
 
-    public FetchFieldManager(ObjectProvider op, Sheet sheet, int row)
+    public FetchFieldManager(ObjectProvider op, Sheet sheet, int row, Table table)
     {
         super(op);
+        this.table = table;
         this.row = row;
         this.sheet = sheet;
     }
 
-    public FetchFieldManager(ExecutionContext ec, AbstractClassMetaData cmd, Sheet sheet, int row)
+    public FetchFieldManager(ExecutionContext ec, AbstractClassMetaData cmd, Sheet sheet, int row, Table table)
     {
         super(ec, cmd);
+        this.table = table;
         this.row = row;
         this.sheet = sheet;
     }
 
-    protected int getColumnIndexForMember(int memberNumber)
+    protected MemberColumnMapping getColumnMapping(int fieldNumber)
     {
-        return ExcelUtils.getColumnIndexForFieldOfClass(cmd, memberNumber);
+        return table.getMemberColumnMappingForMember(cmd.getMetaDataForManagedMemberAtAbsolutePosition(fieldNumber));
     }
 
     public boolean fetchBooleanField(int fieldNumber)
     {
-        int index = getColumnIndexForMember(fieldNumber);
+        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
         Row rrow = sheet.getRow(row);
         Cell cell = rrow.getCell(index);
         if (cell == null)
@@ -91,7 +99,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
 
     public byte fetchByteField(int fieldNumber)
     {
-        int index = getColumnIndexForMember(fieldNumber);
+        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
         Row rrow = sheet.getRow(row);
         Cell cell = rrow.getCell(index);
         if (cell == null)
@@ -103,7 +111,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
 
     public char fetchCharField(int fieldNumber)
     {
-        int index = getColumnIndexForMember(fieldNumber);
+        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
         Row rrow = sheet.getRow(row);
         Cell cell = rrow.getCell(index);
         if (cell == null)
@@ -115,7 +123,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
 
     public double fetchDoubleField(int fieldNumber)
     {
-        int index = getColumnIndexForMember(fieldNumber);
+        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
         Row rrow = sheet.getRow(row);
         Cell cell = rrow.getCell(index);
         if (cell == null)
@@ -127,7 +135,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
 
     public float fetchFloatField(int fieldNumber)
     {
-        int index = getColumnIndexForMember(fieldNumber);
+        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
         Row rrow = sheet.getRow(row);
         Cell cell = rrow.getCell(index);
         if (cell == null)
@@ -139,7 +147,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
 
     public int fetchIntField(int fieldNumber)
     {
-        int index = getColumnIndexForMember(fieldNumber);
+        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
         Row rrow = sheet.getRow(row);
         Cell cell = rrow.getCell(index);
         if (cell == null)
@@ -151,7 +159,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
 
     public long fetchLongField(int fieldNumber)
     {
-        int index = getColumnIndexForMember(fieldNumber);
+        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
         Row rrow = sheet.getRow(row);
         Cell cell = rrow.getCell(index);
         if (cell == null)
@@ -163,7 +171,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
 
     public short fetchShortField(int fieldNumber)
     {
-        int index = getColumnIndexForMember(fieldNumber);
+        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
         Row rrow = sheet.getRow(row);
         Cell cell = rrow.getCell(index);
         if (cell == null)
@@ -175,7 +183,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
 
     public String fetchStringField(int fieldNumber)
     {
-        int index = getColumnIndexForMember(fieldNumber);
+        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
         Row rrow = sheet.getRow(row);
         Cell cell = rrow.getCell(index);
         if (cell == null)
@@ -192,37 +200,39 @@ public class FetchFieldManager extends AbstractFetchFieldManager
         RelationType relationType = mmd.getRelationType(clr);
 
         // Special cases
-        if (relationType != RelationType.NONE)
+        if (relationType != RelationType.NONE && MetaDataUtils.getInstance().isMemberEmbedded(ec.getMetaDataManager(), clr, mmd, relationType, null))
         {
-            if (MetaDataUtils.getInstance().isMemberEmbedded(ec.getMetaDataManager(), clr, mmd, relationType, null))
+            // Embedded field
+            if (RelationType.isRelationSingleValued(relationType))
             {
-                // Embedded field
-                if (RelationType.isRelationSingleValued(relationType))
-                {
-                    // Persistable object embedded into table of this object
-                    Class embcls = mmd.getType();
-                    AbstractClassMetaData embcmd = ec.getMetaDataManager().getMetaDataForClass(embcls, clr);
-                    if (embcmd != null)
-                    {
-                        ObjectProvider embOP = ec.newObjectProviderForEmbedded(embcmd, op, fieldNumber);
-                        embOP.replaceFields(embcmd.getAllMemberPositions(), new FetchEmbeddedFieldManager(embOP, sheet, row, mmd));
-                        return embOP.getObject();
-                    }
-                }
-                else if (RelationType.isRelationMultiValued(relationType))
-                {
-                    throw new NucleusUserException("Dont support embedded multi-valued field at " + mmd.getFullFieldName() + " with Excel");
-                }
+                // TODO Null detection
+                List<AbstractMemberMetaData> embMmds = new ArrayList<AbstractMemberMetaData>();
+                embMmds.add(mmd);
+                AbstractClassMetaData embCmd = ec.getMetaDataManager().getMetaDataForClass(mmd.getType(), clr);
+                ObjectProvider embOP = ec.newObjectProviderForEmbedded(embCmd, op, fieldNumber);
+                FieldManager fetchEmbFM = new FetchEmbeddedFieldManager(embOP, sheet, row, embMmds, table);
+                embOP.replaceFields(embCmd.getAllMemberPositions(), fetchEmbFM);
+                return embOP.getObject();
+            }
+            else if (RelationType.isRelationMultiValued(relationType))
+            {
+                throw new NucleusUserException("Dont support embedded multi-valued field at " + mmd.getFullFieldName() + " with Excel");
             }
         }
 
-        return fetchObjectFieldFromCell(fieldNumber, mmd, clr);
+        return fetchObjectFieldFromCell(fieldNumber, mmd, clr, relationType);
     }
 
-    protected Object fetchObjectFieldFromCell(int fieldNumber, AbstractMemberMetaData mmd, ClassLoaderResolver clr)
+    protected Object fetchObjectFieldFromCell(int fieldNumber, AbstractMemberMetaData mmd, ClassLoaderResolver clr, RelationType relationType)
     {
-        RelationType relationType = mmd.getRelationType(clr);
-        int index = getColumnIndexForMember(fieldNumber);
+        MemberColumnMapping mapping = getColumnMapping(fieldNumber);
+        if (mapping.getNumberOfColumns() > 1)
+        {
+            // TODO Support multicolumn mappings
+            throw new NucleusException("Dont yet support members being mapped to multiple columns : " + mapping.getMemberMetaData().getFullFieldName());
+        }
+
+        int index = mapping.getColumn(0).getPosition();
         Row rrow = sheet.getRow(row);
         Cell cell = rrow.getCell(index);
         if (cell == null)
@@ -231,6 +241,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
         }
         else if (relationType == RelationType.NONE)
         {
+            // TODO Use converter from "mapping"
             if (mmd.getTypeConverterName() != null)
             {
                 // User-defined type converter

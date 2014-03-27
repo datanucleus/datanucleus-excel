@@ -28,18 +28,13 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.datanucleus.ClassLoaderResolver;
 import org.datanucleus.ExecutionContext;
 import org.datanucleus.exceptions.NucleusDataStoreException;
-import org.datanucleus.exceptions.NucleusException;
 import org.datanucleus.identity.OID;
 import org.datanucleus.metadata.AbstractClassMetaData;
 import org.datanucleus.metadata.AbstractMemberMetaData;
-import org.datanucleus.metadata.ColumnMetaData;
-import org.datanucleus.metadata.EmbeddedMetaData;
-import org.datanucleus.metadata.IdentityMetaData;
 import org.datanucleus.metadata.IdentityType;
 import org.datanucleus.metadata.RelationType;
-import org.datanucleus.metadata.VersionMetaData;
 import org.datanucleus.state.ObjectProvider;
-import org.datanucleus.store.schema.naming.NamingFactory;
+import org.datanucleus.store.schema.table.Table;
 import org.datanucleus.util.Localiser;
 
 /**
@@ -53,161 +48,16 @@ public class ExcelUtils
         "org.datanucleus.store.excel.Localisation", ExcelStoreManager.class.getClassLoader());
 
     /**
-     * Convenience method to get the index number where a field of a class is persisted.
-     * Uses column "position" expecting an integer value.
-     * The input field number is the absolute number (0 or higher); a value of -1 implies surrogate identity column,
-     * and -2 implies surrogate version column
-     * @param acmd MetaData for the class
-     * @param fieldNumber Absolute field number that we are interested in.
-     */
-    public static int getColumnIndexForFieldOfClass(AbstractClassMetaData acmd, int fieldNumber)
-    {
-        if (fieldNumber >= 0)
-        {
-            // Field of the class
-            AbstractMemberMetaData ammd = acmd.getMetaDataForManagedMemberAtAbsolutePosition(fieldNumber);
-            Integer colPos = (ammd.getColumnMetaData() == null || ammd.getColumnMetaData().length == 0 ?
-                    null : ammd.getColumnMetaData()[0].getPosition());
-            if (colPos == null)
-            {
-                ColumnMetaData[] colmds = ammd.getColumnMetaData();
-                if (colmds != null && colmds.length > 0)
-                {
-                    String colName = colmds[0].getName();
-                    try
-                    {
-                        return Integer.valueOf(colName).intValue();
-                    }
-                    catch (NumberFormatException nfe)
-                    {
-                        return (int)fieldNumber;
-                    }
-                }
-                else
-                {
-                    return (int)fieldNumber;
-                }
-            }
-            else
-            {
-                return colPos.intValue();
-            }
-        }
-        else if (fieldNumber == -1)
-        {
-            // Surrogate datastore identity column
-            IdentityMetaData imd = acmd.getIdentityMetaData();
-            if (imd != null)
-            {
-                Integer colPos = (imd.getColumnMetaData() == null ? null : imd.getColumnMetaData().getPosition());
-                if (colPos == null)
-                {
-                    if (imd.getColumnMetaData() != null)
-                    {
-                        String colName = imd.getColumnMetaData().getName();
-                        try
-                        {
-                            return Integer.valueOf(colName).intValue();
-                        }
-                        catch (NumberFormatException nfe)
-                        {
-                        }
-                    }
-                }
-                else
-                {
-                    colPos.intValue();
-                }
-            }
-            int fallbackPosition = acmd.getNoOfInheritedManagedMembers() + acmd.getNoOfManagedMembers();
-            return fallbackPosition;
-        }
-        else if (fieldNumber == -2)
-        {
-            // Surrogate version column
-            VersionMetaData vmd = acmd.getVersionMetaDataForClass();
-            if (vmd != null)
-            {
-                Integer colPos = (vmd.getColumnMetaData() == null ? null : vmd.getColumnMetaData().getPosition());
-                if (colPos == null)
-                {
-                    if (vmd.getColumnMetaData() != null)
-                    {
-                        String colName = vmd.getColumnMetaData().getName();
-                        try
-                        {
-                            return Integer.valueOf(colName).intValue();
-                        }
-                        catch (NumberFormatException nfe)
-                        {
-                        }
-                    }
-                }
-                else
-                {
-                    colPos.intValue();
-                }
-            }
-            int fallbackPosition = acmd.getNoOfInheritedManagedMembers() + acmd.getNoOfManagedMembers() + 1;
-            return fallbackPosition;
-        }
-        else
-        {
-            throw new NucleusException("Unsupported field number " + fieldNumber);
-        }
-    }
-
-    public static int getColumnIndexForFieldOfEmbeddedClass(AbstractClassMetaData acmd, int fieldNumber, AbstractMemberMetaData mmd)
-    {
-        if (fieldNumber >= 0)
-        {
-        	EmbeddedMetaData emd = mmd.getEmbeddedMetaData();
-        	AbstractMemberMetaData[] emb_mmd = emd.getMemberMetaData();
-            // Field of the class
-            AbstractMemberMetaData ammd = emb_mmd[fieldNumber];
-            Integer colPos = (ammd.getColumnMetaData() == null || ammd.getColumnMetaData().length == 0 ?
-                    null : ammd.getColumnMetaData()[0].getPosition());
-            if (colPos == null)
-            {
-                ColumnMetaData[] colmds = ammd.getColumnMetaData();
-                if (colmds != null && colmds.length > 0)
-                {
-                    String colName = colmds[0].getName();
-                    try
-                    {
-                        return Integer.valueOf(colName).intValue();
-                    }
-                    catch (NumberFormatException nfe)
-                    {
-                        return fieldNumber;
-                    }
-                }
-                else
-                {
-                    return fieldNumber;
-                }
-            }
-            else
-            {
-                return colPos;
-            }
-        }
-        else
-        {
-            throw new NucleusException("Unsupported field number " + fieldNumber);
-        }
-    }
-
-    /**
      * Convenience method to return the worksheet used for storing the specified object.
      * @param op ObjectProvider for the object
      * @param wb Workbook
+     * @param table The table representing this worksheet
      * @return The Work Sheet
      * @throws NucleusDataStoreException if the work sheet doesn't exist in this workbook
      */
-    public static Sheet getSheetForClass(ObjectProvider op, Workbook wb)
+    public static Sheet getSheetForClass(ObjectProvider op, Workbook wb, Table table)
     {
-        String sheetName = op.getExecutionContext().getStoreManager().getNamingFactory().getTableName(op.getClassMetaData());
+        String sheetName = table.getIdentifier();
         final Sheet sheet = wb.getSheet(sheetName);
         if (sheet == null)
         {
@@ -223,11 +73,11 @@ public class ExcelUtils
      * For datastore-identity does a search for the row with the datastore column having the specified value
      * @param op ObjectProvider for the object
      * @param wb Workbook
-     * @param originalValue Use the original value of the identifiying fields if available (for when we are updating
-     *     and using nondurable identity).
+     * @param originalValue Use the original value of the identifiying fields if available (for when we are updating and using nondurable identity).
+     * @param table The table representing this worksheet
      * @return The row number (or -1 if not found)
      */
-    public static int getRowNumberForObjectInWorkbook(ObjectProvider op, Workbook wb, boolean originalValue)
+    public static int getRowNumberForObjectInWorkbook(ObjectProvider op, Workbook wb, boolean originalValue, Table table)
     {
         final AbstractClassMetaData cmd = op.getClassMetaData();
         if (cmd.getIdentityType() == IdentityType.APPLICATION)
@@ -255,15 +105,19 @@ public class ExcelUtils
                     AbstractClassMetaData embCmd = op.getExecutionContext().getMetaDataManager().getMetaDataForClass(mmd.getType(), clr);
                     for (int j=0;j<embCmd.getNoOfManagedMembers();j++)
                     {
+                        // TODO Support nested embedded
                         AbstractMemberMetaData embMmd = embCmd.getMetaDataForManagedMemberAtAbsolutePosition(j);
-                        pkFieldColList.add(getColumnIndexForFieldOfEmbeddedClass(cmd, j, mmd));
+                        List<AbstractMemberMetaData> embMmds = new ArrayList();
+                        embMmds.add(mmd);
+                        embMmds.add(embMmd);
+                        pkFieldColList.add(table.getMemberColumnMappingForEmbeddedMember(embMmds).getColumn(0).getPosition());
                         pkFieldValList.add(embOP.provideField(j));
                         pkFieldTypeList.add(embMmd.getType());
                     }
                 }
                 else
                 {
-                    pkFieldColList.add(getColumnIndexForFieldOfClass(cmd, pkFieldNumbers[i]));
+                    pkFieldColList.add(table.getMemberColumnMappingForMember(mmd).getColumn(0).getPosition());
                     pkFieldValList.add(fieldValue);
                     pkFieldTypeList.add(mmd.getType());
                 }
@@ -305,7 +159,7 @@ public class ExcelUtils
         {
             String sheetName = op.getExecutionContext().getStoreManager().getNamingFactory().getTableName(cmd);
             final Sheet sheet = wb.getSheet(sheetName);
-            int datastoreIdColNumber = (int)ExcelUtils.getColumnIndexForFieldOfClass(cmd, -1);
+            int datastoreIdColNo = table.getDatastoreIdColumn().getPosition();
             Object key = ((OID)op.getInternalObjectId()).getKeyValue();
             if (sheet != null)
             {
@@ -314,7 +168,7 @@ public class ExcelUtils
                     Row row = sheet.getRow(i);
                     if (row != null)
                     {
-                        Cell cell = row.getCell(datastoreIdColNumber);
+                        Cell cell = row.getCell(datastoreIdColNo);
                         if (cell != null)
                         {
                             if (cellMatches(cell, key.getClass(), key))
@@ -368,15 +222,19 @@ public class ExcelUtils
                     AbstractClassMetaData embCmd = op.getExecutionContext().getMetaDataManager().getMetaDataForClass(mmd.getType(), clr);
                     for (int j=0;j<embCmd.getNoOfManagedMembers();j++)
                     {
+                        // TODO Support nested embedded
                         AbstractMemberMetaData embMmd = embCmd.getMetaDataForManagedMemberAtAbsolutePosition(j);
-                        fieldColList.add(getColumnIndexForFieldOfEmbeddedClass(cmd, j, mmd));
+                        List<AbstractMemberMetaData> embMmds = new ArrayList();
+                        embMmds.add(mmd);
+                        embMmds.add(embMmd);
+                        fieldColList.add(table.getMemberColumnMappingForEmbeddedMember(embMmds).getColumn(0).getPosition());
                         fieldTypeList.add(embMmd.getType());
                         fieldValList.add(embOP.provideField(j));
                     }
                 }
                 else if (relationType == RelationType.NONE)
                 {
-                    fieldColList.add(getColumnIndexForFieldOfClass(cmd, fieldNumbers[i]));
+                    fieldColList.add(table.getMemberColumnMappingForMember(mmd).getColumn(0).getPosition());
                     fieldTypeList.add(mmd.getType());
                     fieldValList.add(fieldValue);
                 }
@@ -499,8 +357,8 @@ public class ExcelUtils
         int numRows = 0;
 
         final AbstractClassMetaData cmd = op.getClassMetaData();
-        NamingFactory namingFactory = op.getExecutionContext().getStoreManager().getNamingFactory();
-        String sheetName = namingFactory.getTableName(cmd);
+        Table table = (Table) op.getExecutionContext().getStoreManager().getStoreDataForClass(op.getClassMetaData().getFullClassName()).getProperty("tableObject");
+        String sheetName = table.getIdentifier();
         final Sheet sheet = wb.getSheet(sheetName);
         if (cmd.getIdentityType() == IdentityType.APPLICATION)
         {
@@ -520,7 +378,8 @@ public class ExcelUtils
                     {
                         for (int j=0;j<pkFieldNumbers.length;j++)
                         {
-                            int colNumber = (int)ExcelUtils.getColumnIndexForFieldOfClass(cmd, pkFieldNumbers[j]);
+                            AbstractMemberMetaData pkMmd = cmd.getMetaDataForManagedMemberAtAbsolutePosition(pkFieldNumbers[j]);
+                            int colNumber = table.getMemberColumnMappingForMember(pkMmd).getColumn(0).getPosition();
                             Cell cell = row.getCell(colNumber);
                             if (cell != null)
                             {
@@ -536,7 +395,7 @@ public class ExcelUtils
         {
             if (sheet != null && sheet.getPhysicalNumberOfRows() > 0)
             {
-                int datastoreIdColNumber = (int)ExcelUtils.getColumnIndexForFieldOfClass(cmd, -1);
+                int datastoreIdColNumber = table.getDatastoreIdColumn().getPosition();
                 for (int i=sheet.getFirstRowNum(); i<sheet.getLastRowNum()+1; i++)
                 {
                     Row rrow = sheet.getRow(i);

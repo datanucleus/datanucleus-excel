@@ -18,6 +18,9 @@ Contributors :
 ***********************************************************************/
 package org.datanucleus.store.excel.fieldmanager;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.poi.ss.usermodel.Row;
 import org.datanucleus.ClassLoaderResolver;
 import org.datanucleus.ExecutionContext;
@@ -26,33 +29,46 @@ import org.datanucleus.metadata.AbstractMemberMetaData;
 import org.datanucleus.metadata.EmbeddedMetaData;
 import org.datanucleus.metadata.RelationType;
 import org.datanucleus.state.ObjectProvider;
-import org.datanucleus.store.excel.ExcelUtils;
+import org.datanucleus.store.schema.table.MemberColumnMapping;
+import org.datanucleus.store.schema.table.Table;
 
 /**
  * FieldManager to handle the store information for an embedded persistable object into Excel.
  */
 public class StoreEmbeddedFieldManager extends StoreFieldManager
 {
-    AbstractMemberMetaData embeddedMetaData;
+    /** Metadata for the embedded member (maybe nested) that this FieldManager represents). */
+    protected List<AbstractMemberMetaData> mmds;
 
-    public StoreEmbeddedFieldManager(ObjectProvider op, Row row, AbstractMemberMetaData mmd, boolean insert)
+    /**
+     * Constructor called when it is needed to null out all columns of an embedded object (and nested embedded columns).
+     */
+    public StoreEmbeddedFieldManager(ExecutionContext ec, AbstractClassMetaData cmd, Row row, boolean insert, List<AbstractMemberMetaData> mmds, Table table)
     {
-        super(op, row, insert);
-        embeddedMetaData = mmd;
+        super(ec, cmd, row, insert, table);
+        this.mmds = mmds;
     }
 
-    protected int getColumnIndexForMember(int memberNumber)
+    public StoreEmbeddedFieldManager(ObjectProvider op, Row row, boolean insert, List<AbstractMemberMetaData> mmds, Table table)
     {
-        return ExcelUtils.getColumnIndexForFieldOfEmbeddedClass(op.getClassMetaData(),memberNumber, embeddedMetaData);
+        super(op, row, insert, table);
+        this.mmds = mmds;
+    }
+
+    protected MemberColumnMapping getColumnMapping(int fieldNumber)
+    {
+        List<AbstractMemberMetaData> embMmds = new ArrayList<AbstractMemberMetaData>(mmds);
+        embMmds.add(cmd.getMetaDataForManagedMemberAtAbsolutePosition(fieldNumber));
+        return table.getMemberColumnMappingForEmbeddedMember(embMmds);
     }
 
     public void storeObjectField(int fieldNumber, Object value)
     {
         ExecutionContext ec = op.getExecutionContext();
         ClassLoaderResolver clr = ec.getClassLoaderResolver();
-    	EmbeddedMetaData emd = embeddedMetaData.getEmbeddedMetaData();
-    	AbstractMemberMetaData []emb_mmd = emd.getMemberMetaData();
-        AbstractMemberMetaData mmd = emb_mmd[fieldNumber];
+        EmbeddedMetaData embmd = mmds.get(0).getEmbeddedMetaData();
+    	AbstractMemberMetaData []embMmd = embmd.getMemberMetaData();
+        AbstractMemberMetaData mmd = embMmd[fieldNumber];
         if (!isStorable(mmd))
         {
             return;
@@ -76,7 +92,9 @@ public class StoreEmbeddedFieldManager extends StoreFieldManager
                     embSM = ec.newObjectProviderForEmbedded(embcmd, op, fieldNumber);
                 }
 
-                embSM.provideFields(embcmd.getAllMemberPositions(), new StoreEmbeddedFieldManager(embSM, row, mmd, insert));
+                List<AbstractMemberMetaData> embMmds = new ArrayList<AbstractMemberMetaData>(mmds);
+                embMmds.add(mmd);
+                embSM.provideFields(embcmd.getAllMemberPositions(), new StoreEmbeddedFieldManager(embSM, row, insert, embMmds, table));
                 return;
             }
         }

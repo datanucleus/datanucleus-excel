@@ -32,13 +32,15 @@ import org.datanucleus.identity.IdentityUtils;
 import org.datanucleus.identity.OIDFactory;
 import org.datanucleus.identity.SCOID;
 import org.datanucleus.metadata.AbstractClassMetaData;
+import org.datanucleus.metadata.AbstractMemberMetaData;
 import org.datanucleus.metadata.IdentityType;
 import org.datanucleus.state.ObjectProvider;
 import org.datanucleus.store.FieldValues;
 import org.datanucleus.store.connection.ManagedConnection;
-import org.datanucleus.store.excel.ExcelUtils;
+import org.datanucleus.store.excel.ExcelStoreManager;
 import org.datanucleus.store.excel.fieldmanager.FetchFieldManager;
 import org.datanucleus.store.query.AbstractCandidateLazyLoadList;
+import org.datanucleus.store.schema.table.Table;
 
 /**
  * Wrapper for a List of candidate instances from Excel. Loads the instances from the workbook lazily.
@@ -61,8 +63,7 @@ public class ExcelCandidateList extends AbstractCandidateLazyLoadList
      * @param mconn Connection to the datastore
      * @param ignoreCache Whether to ignore the cache on object retrieval
      */
-    public ExcelCandidateList(Class cls, boolean subclasses, ExecutionContext ec, String cacheType,
-            ManagedConnection mconn, boolean ignoreCache)
+    public ExcelCandidateList(Class cls, boolean subclasses, ExecutionContext ec, String cacheType, ManagedConnection mconn, boolean ignoreCache)
     {
         super(cls, subclasses, ec, cacheType);
         this.mconn = mconn;
@@ -70,12 +71,20 @@ public class ExcelCandidateList extends AbstractCandidateLazyLoadList
 
         // Count the instances per class by scanning the associated worksheets
         numberInstancesPerClass = new ArrayList<Integer>();
+        ExcelStoreManager storeMgr = (ExcelStoreManager) ec.getStoreManager();
         Iterator<AbstractClassMetaData> cmdIter = cmds.iterator();
+        Workbook workbook = (Workbook) mconn.getConnection();
         while (cmdIter.hasNext())
         {
             AbstractClassMetaData cmd = cmdIter.next();
-            String sheetName = ec.getStoreManager().getNamingFactory().getTableName(cmd);
-            Workbook workbook = (Workbook) mconn.getConnection();
+
+            if (!storeMgr.managesClass(cmd.getFullClassName()))
+            {
+                // Make sure schema exists, using this connection
+                storeMgr.manageClasses(new String[] {cmd.getFullClassName()}, ec.getClassLoaderResolver(), workbook);
+            }
+            Table table = (Table) ec.getStoreManager().getStoreDataForClass(cmd.getFullClassName()).getProperty("tableObject");
+            String sheetName = table.getIdentifier();
             Sheet sheet = workbook.getSheet(sheetName);
             int size = 0;
             if (sheet != null && sheet.getPhysicalNumberOfRows() > 0)
@@ -84,11 +93,13 @@ public class ExcelCandidateList extends AbstractCandidateLazyLoadList
                 int idColIndex = -1;
                 if (cmd.getIdentityType() == IdentityType.APPLICATION)
                 {
-                    idColIndex = (int)ExcelUtils.getColumnIndexForFieldOfClass(cmd, cmd.getPKMemberPositions()[0]);
+                    int[] pkFieldNums = cmd.getPKMemberPositions(); // TODO Check all pk cols?
+                    AbstractMemberMetaData pkMmd = cmd.getMetaDataForManagedMemberAtAbsolutePosition(pkFieldNums[0]);
+                    idColIndex = table.getMemberColumnMappingForMember(pkMmd).getColumn(0).getPosition();
                 }
                 else if (cmd.getIdentityType() == IdentityType.DATASTORE)
                 {
-                    idColIndex = (int)ExcelUtils.getColumnIndexForFieldOfClass(cmd, -1);
+                    idColIndex = table.getDatastoreIdColumn().getPosition();
                 }
                 else
                 {
@@ -148,6 +159,7 @@ public class ExcelCandidateList extends AbstractCandidateLazyLoadList
             {
                 // Object is of this candidate type, so find the object
                 String sheetName = ec.getStoreManager().getNamingFactory().getTableName(cmd);
+                Table table = (Table) ec.getStoreManager().getStoreDataForClass(cmd.getFullClassName()).getProperty("tableObject");
                 Workbook workbook = (Workbook) mconn.getConnection();
                 final Sheet worksheet = workbook.getSheet(sheetName);
                 if (worksheet != null)
@@ -155,11 +167,13 @@ public class ExcelCandidateList extends AbstractCandidateLazyLoadList
                     int idColIndex = -1;
                     if (cmd.getIdentityType() == IdentityType.APPLICATION)
                     {
-                        idColIndex = (int)ExcelUtils.getColumnIndexForFieldOfClass(cmd, cmd.getPKMemberPositions()[0]);
+                        int[] pkFieldNums = cmd.getPKMemberPositions(); // TODO Check all pk cols?
+                        AbstractMemberMetaData pkMmd = cmd.getMetaDataForManagedMemberAtAbsolutePosition(pkFieldNums[0]);
+                        idColIndex = table.getMemberColumnMappingForMember(pkMmd).getColumn(0).getPosition();
                     }
                     else if (cmd.getIdentityType() == IdentityType.DATASTORE)
                     {
-                        idColIndex = (int)ExcelUtils.getColumnIndexForFieldOfClass(cmd, -1);
+                        idColIndex = table.getDatastoreIdColumn().getPosition();
                     }
                     else
                     {
@@ -178,7 +192,7 @@ public class ExcelCandidateList extends AbstractCandidateLazyLoadList
                                 final int rowNumber = i;
                                 if (cmd.getIdentityType() == IdentityType.APPLICATION)
                                 {
-                                    final FetchFieldManager fm = new FetchFieldManager(ec, cmd, worksheet, rowNumber);
+                                    final FetchFieldManager fm = new FetchFieldManager(ec, cmd, worksheet, rowNumber, table);
                                     Object id = IdentityUtils.getApplicationIdentityForResultSetRow(ec, cmd, null, false, fm);
 
                                     return ec.findObject(id, new FieldValues()
@@ -200,7 +214,7 @@ public class ExcelCandidateList extends AbstractCandidateLazyLoadList
                                 }
                                 else if (cmd.getIdentityType() == IdentityType.DATASTORE)
                                 {
-                                    final FetchFieldManager fm = new FetchFieldManager(ec, cmd, worksheet, rowNumber);
+                                    final FetchFieldManager fm = new FetchFieldManager(ec, cmd, worksheet, rowNumber, table);
                                     Object id = null;
                                     Cell idCell = row.getCell(idColIndex);
                                     int type = idCell.getCellType();
@@ -234,7 +248,7 @@ public class ExcelCandidateList extends AbstractCandidateLazyLoadList
                                 else
                                 {
                                     // Nondurable identity
-                                    final FetchFieldManager fm = new FetchFieldManager(ec, cmd, worksheet, rowNumber);
+                                    final FetchFieldManager fm = new FetchFieldManager(ec, cmd, worksheet, rowNumber, table);
                                     Object id = new SCOID(cmd.getFullClassName());
                                     return ec.findObject(id, new FieldValues()
                                     {

@@ -18,6 +18,9 @@ Contributors :
 ***********************************************************************/
 package org.datanucleus.store.excel.fieldmanager;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.poi.ss.usermodel.Sheet;
 import org.datanucleus.ClassLoaderResolver;
 import org.datanucleus.ExecutionContext;
@@ -26,48 +29,58 @@ import org.datanucleus.metadata.AbstractMemberMetaData;
 import org.datanucleus.metadata.EmbeddedMetaData;
 import org.datanucleus.metadata.RelationType;
 import org.datanucleus.state.ObjectProvider;
-import org.datanucleus.store.excel.ExcelUtils;
+import org.datanucleus.store.fieldmanager.FieldManager;
+import org.datanucleus.store.schema.table.MemberColumnMapping;
+import org.datanucleus.store.schema.table.Table;
 
 /**
  * FieldManager to handle the retrieval of information for an embedded persistable object from a row of Excel.
  */
 public class FetchEmbeddedFieldManager extends FetchFieldManager
 {
-    AbstractMemberMetaData embeddedMetaData;
+    /** Metadata for the embedded member (maybe nested) that this FieldManager represents). */
+    protected List<AbstractMemberMetaData> mmds;
 
-    public FetchEmbeddedFieldManager(ObjectProvider op, Sheet sheet, int row, AbstractMemberMetaData mmd)
+    public FetchEmbeddedFieldManager(ExecutionContext ec, Sheet sheet, int row, AbstractClassMetaData cmd, List<AbstractMemberMetaData> mmds, Table table)
     {
-        super(op, sheet, row);
-        embeddedMetaData = mmd;
+        super(ec, cmd, sheet, row, table);
+        this.mmds = mmds;
     }
 
-    protected int getColumnIndexForMember(int memberNumber)
+    public FetchEmbeddedFieldManager(ObjectProvider op, Sheet sheet, int row, List<AbstractMemberMetaData> mmds, Table table)
     {
-        return ExcelUtils.getColumnIndexForFieldOfEmbeddedClass(cmd, memberNumber, embeddedMetaData);
+        super(op, sheet, row, table);
+        this.mmds = mmds;
+    }
+
+    protected MemberColumnMapping getColumnMapping(int fieldNumber)
+    {
+        List<AbstractMemberMetaData> embMmds = new ArrayList<AbstractMemberMetaData>(mmds);
+        embMmds.add(cmd.getMetaDataForManagedMemberAtAbsolutePosition(fieldNumber));
+        return table.getMemberColumnMappingForEmbeddedMember(embMmds);
     }
 
     public Object fetchObjectField(int fieldNumber)
     {
         ExecutionContext ec = op.getExecutionContext();
         ClassLoaderResolver clr = ec.getClassLoaderResolver();
-    	EmbeddedMetaData emd = embeddedMetaData.getEmbeddedMetaData();
-    	AbstractMemberMetaData[] emb_mmd = emd.getMemberMetaData();
-        AbstractMemberMetaData mmd = emb_mmd[fieldNumber];
+        EmbeddedMetaData embmd = mmds.get(0).getEmbeddedMetaData();
+    	AbstractMemberMetaData[] embMmd = embmd.getMemberMetaData();
+        AbstractMemberMetaData mmd = embMmd[fieldNumber];
         RelationType relationType = mmd.getRelationType(clr);
 
         if (RelationType.isRelationSingleValued(relationType) && mmd.isEmbedded())
         {
             // Persistable object embedded into this table
-            Class embcls = mmd.getType();
-            AbstractClassMetaData embcmd = ec.getMetaDataManager().getMetaDataForClass(embcls, clr);
-            if (embcmd != null)
-            {
-                ObjectProvider embSM = ec.newObjectProviderForEmbedded(cmd, op, fieldNumber);
-                embSM.replaceFields(embcmd.getAllMemberPositions(), new FetchEmbeddedFieldManager(embSM, sheet, row, mmd));
-                return embSM.getObject();
-            }
+            List<AbstractMemberMetaData> embMmds = new ArrayList<AbstractMemberMetaData>(mmds);
+            embMmds.add(mmd);
+            AbstractClassMetaData embCmd = ec.getMetaDataManager().getMetaDataForClass(mmd.getType(), clr);
+            ObjectProvider embOP = ec.newObjectProviderForEmbedded(embCmd, op, fieldNumber);
+            FieldManager fetchEmbFM = new FetchEmbeddedFieldManager(embOP, sheet, row, embMmds, table);
+            embOP.replaceFields(embCmd.getAllMemberPositions(), fetchEmbFM);
+            return embOP.getObject();
         }
 
-        return fetchObjectFieldFromCell(fieldNumber, mmd, clr);
+        return fetchObjectFieldFromCell(fieldNumber, mmd, clr, relationType);
     }
 }
