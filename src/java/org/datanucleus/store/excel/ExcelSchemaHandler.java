@@ -28,6 +28,7 @@ import org.datanucleus.metadata.AbstractClassMetaData;
 import org.datanucleus.store.StoreManager;
 import org.datanucleus.store.connection.ManagedConnection;
 import org.datanucleus.store.schema.AbstractStoreSchemaHandler;
+import org.datanucleus.store.schema.table.Table;
 import org.datanucleus.util.Localiser;
 import org.datanucleus.util.NucleusLogger;
 
@@ -69,7 +70,8 @@ public class ExcelSchemaHandler extends AbstractStoreSchemaHandler
                 AbstractClassMetaData cmd = storeMgr.getMetaDataManager().getMetaDataForClass(className, clr);
                 if (cmd != null)
                 {
-                    String sheetName = storeMgr.getNamingFactory().getTableName(cmd);
+                    Table table = (Table) storeMgr.getStoreDataForClass(cmd.getFullClassName()).getProperty("tableObject");
+                    String sheetName = table.getIdentifier();
                     Sheet sheet = wb.getSheet(sheetName);
                     if (sheet == null)
                     {
@@ -82,6 +84,10 @@ public class ExcelSchemaHandler extends AbstractStoreSchemaHandler
                         }
 
                         // Create columns of sheet
+                        for (int i=0;i<table.getNumberOfColumns();i++)
+                        {
+                            // TODO Create header row
+                        }
                     }
                 }
             }
@@ -119,7 +125,8 @@ public class ExcelSchemaHandler extends AbstractStoreSchemaHandler
                 AbstractClassMetaData cmd = storeMgr.getMetaDataManager().getMetaDataForClass(className, clr);
                 if (cmd != null)
                 {
-                    String sheetName = storeMgr.getNamingFactory().getTableName(cmd);
+                    Table table = (Table) storeMgr.getStoreDataForClass(cmd.getFullClassName()).getProperty("tableObject");
+                    String sheetName = table.getIdentifier();
                     Sheet sheet = wb.getSheet(sheetName);
                     if (sheet != null)
                     {
