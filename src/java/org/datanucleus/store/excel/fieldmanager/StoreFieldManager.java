@@ -414,13 +414,9 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                 TypeManager typeMgr = ec.getNucleusContext().getTypeManager();
                 boolean useLong = false;
                 ColumnMetaData[] colmds = mmd.getColumnMetaData();
-                if (colmds != null && colmds.length == 1)
+                if (colmds != null && colmds.length == 1 && MetaDataUtils.isJdbcTypeNumeric(colmds[0].getJdbcType()))
                 {
-                    String jdbc = colmds[0].getJdbcType();
-                    if (jdbc != null && (jdbc.equalsIgnoreCase("int") || jdbc.equalsIgnoreCase("integer")))
-                    {
-                        useLong = true;
-                    }
+                    useLong = true;
                 }
 
                 TypeConverter strConv = typeMgr.getTypeConverterForType(mmd.getType(), String.class);
