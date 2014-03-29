@@ -38,8 +38,6 @@ import org.datanucleus.exceptions.NucleusUserException;
 import org.datanucleus.identity.IdentityUtils;
 import org.datanucleus.metadata.AbstractClassMetaData;
 import org.datanucleus.metadata.AbstractMemberMetaData;
-import org.datanucleus.metadata.ColumnMetaData;
-import org.datanucleus.metadata.JdbcType;
 import org.datanucleus.metadata.MetaDataUtils;
 import org.datanucleus.metadata.RelationType;
 import org.datanucleus.state.ObjectProvider;
@@ -363,12 +361,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
             }
             else if (Enum.class.isAssignableFrom(mmd.getType()))
             {
-                ColumnMetaData colmd = null;
-                if (mmd.getColumnMetaData() != null && mmd.getColumnMetaData().length > 0)
-                {
-                    colmd = mmd.getColumnMetaData()[0];
-                }
-                if (MetaDataUtils.persistColumnAsNumeric(colmd))
+                if (MetaDataUtils.isJdbcTypeNumeric(col.getJdbcType()))
                 {
                     double value = cell.getNumericCellValue();
                     return mmd.getType().getEnumConstants()[(int)value];
@@ -395,14 +388,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
                 }
             }
 
-            boolean useLong = false;
-            if (col.getJdbcType() != null)
-            {
-                if (col.getJdbcType() == JdbcType.INTEGER || col.getJdbcType() == JdbcType.SMALLINT || col.getJdbcType() == JdbcType.BIGINT)
-                {
-                    useLong = true;
-                }
-            }
+            boolean useLong = MetaDataUtils.isJdbcTypeNumeric(col.getJdbcType());
 
             // See if we can persist it using built-in converters
             Object value = null;

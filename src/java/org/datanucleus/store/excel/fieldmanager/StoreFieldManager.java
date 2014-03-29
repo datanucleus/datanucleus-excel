@@ -39,7 +39,6 @@ import org.datanucleus.exceptions.NucleusUserException;
 import org.datanucleus.identity.IdentityUtils;
 import org.datanucleus.metadata.AbstractClassMetaData;
 import org.datanucleus.metadata.AbstractMemberMetaData;
-import org.datanucleus.metadata.ColumnMetaData;
 import org.datanucleus.metadata.IdentityType;
 import org.datanucleus.metadata.MetaDataUtils;
 import org.datanucleus.metadata.RelationType;
@@ -388,12 +387,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
             }
             else if (Enum.class.isAssignableFrom(mmd.getType()))
             {
-                ColumnMetaData colmd = null;
-                if (mmd.getColumnMetaData() != null && mmd.getColumnMetaData().length > 0)
-                {
-                    colmd = mmd.getColumnMetaData()[0];
-                }
-                if (MetaDataUtils.persistColumnAsNumeric(colmd))
+                if (MetaDataUtils.isJdbcTypeNumeric(mapping.getColumn(0).getJdbcType()))
                 {
                     cell.setCellValue(((Enum)value).ordinal());
                 }
@@ -412,14 +406,8 @@ public class StoreFieldManager extends AbstractStoreFieldManager
             {
                 // Try to persist using converters
                 TypeManager typeMgr = ec.getNucleusContext().getTypeManager();
-                boolean useLong = false;
-                ColumnMetaData[] colmds = mmd.getColumnMetaData();
-                if (colmds != null && colmds.length == 1 && MetaDataUtils.isJdbcTypeNumeric(colmds[0].getJdbcType()))
-                {
-                    useLong = true;
-                }
+                boolean useLong = MetaDataUtils.isJdbcTypeNumeric(mapping.getColumn(0).getJdbcType());
 
-                TypeConverter strConv = typeMgr.getTypeConverterForType(mmd.getType(), String.class);
                 TypeConverter longConv = typeMgr.getTypeConverterForType(mmd.getType(), Long.class);
                 if (useLong)
                 {
@@ -431,6 +419,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                 }
                 else
                 {
+                    TypeConverter strConv = typeMgr.getTypeConverterForType(mmd.getType(), String.class);
                     if (strConv != null)
                     {
                         CreationHelper createHelper = row.getSheet().getWorkbook().getCreationHelper();
