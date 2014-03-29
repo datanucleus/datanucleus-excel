@@ -85,8 +85,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
 
     public boolean fetchBooleanField(int fieldNumber)
     {
-        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
-        Cell cell = sheet.getRow(rowNumber).getCell(index);
+        Cell cell = sheet.getRow(rowNumber).getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition());
         if (cell == null)
         {
             return false;
@@ -96,8 +95,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
 
     public byte fetchByteField(int fieldNumber)
     {
-        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
-        Cell cell = sheet.getRow(rowNumber).getCell(index);
+        Cell cell = sheet.getRow(rowNumber).getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition());
         if (cell == null)
         {
             return 0;
@@ -107,8 +105,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
 
     public char fetchCharField(int fieldNumber)
     {
-        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
-        Cell cell = sheet.getRow(rowNumber).getCell(index);
+        Cell cell = sheet.getRow(rowNumber).getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition());
         if (cell == null)
         {
             return 0;
@@ -118,8 +115,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
 
     public double fetchDoubleField(int fieldNumber)
     {
-        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
-        Cell cell = sheet.getRow(rowNumber).getCell(index);
+        Cell cell = sheet.getRow(rowNumber).getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition());
         if (cell == null)
         {
             return 0;
@@ -129,8 +125,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
 
     public float fetchFloatField(int fieldNumber)
     {
-        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
-        Cell cell = sheet.getRow(rowNumber).getCell(index);
+        Cell cell = sheet.getRow(rowNumber).getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition());
         if (cell == null)
         {
             return 0;
@@ -140,8 +135,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
 
     public int fetchIntField(int fieldNumber)
     {
-        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
-        Cell cell = sheet.getRow(rowNumber).getCell(index);
+        Cell cell = sheet.getRow(rowNumber).getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition());
         if (cell == null)
         {
             return 0;
@@ -151,8 +145,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
 
     public long fetchLongField(int fieldNumber)
     {
-        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
-        Cell cell = sheet.getRow(rowNumber).getCell(index);
+        Cell cell = sheet.getRow(rowNumber).getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition());
         if (cell == null)
         {
             return 0;
@@ -162,8 +155,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
 
     public short fetchShortField(int fieldNumber)
     {
-        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
-        Cell cell = sheet.getRow(rowNumber).getCell(index);
+        Cell cell = sheet.getRow(rowNumber).getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition());
         if (cell == null)
         {
             return 0;
@@ -173,8 +165,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
 
     public String fetchStringField(int fieldNumber)
     {
-        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
-        Cell cell = sheet.getRow(rowNumber).getCell(index);
+        Cell cell = sheet.getRow(rowNumber).getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition());
         if (cell == null)
         {
             return null;
@@ -221,8 +212,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
             throw new NucleusException("Dont yet support members being mapped to multiple columns : " + mapping.getMemberMetaData().getFullFieldName());
         }
 
-        int index = mapping.getColumn(0).getPosition();
-        Cell cell = sheet.getRow(rowNumber).getCell(index);
+        Cell cell = sheet.getRow(rowNumber).getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition());
         if (cell == null)
         {
             return null;

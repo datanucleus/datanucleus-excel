@@ -113,12 +113,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         {
             return;
         }
-        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
-        Cell cell = row.getCell((int)index);
-        if (cell == null)
-        {
-            cell = row.createCell((int)index);
-        }
+        Cell cell = row.getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition(), Row.CREATE_NULL_AS_BLANK);
         cell.setCellValue(value);
     }
 
@@ -128,12 +123,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         {
             return;
         }
-        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
-        Cell cell = row.getCell((int)index);
-        if (cell == null)
-        {
-            cell = row.createCell((int)index);
-        }
+        Cell cell = row.getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition(), Row.CREATE_NULL_AS_BLANK);
         cell.setCellValue(value);
     }
 
@@ -143,12 +133,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         {
             return;
         }
-        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
-        Cell cell = row.getCell((int)index);
-        if (cell == null)
-        {
-            cell = row.createCell((int)index);
-        }
+        Cell cell = row.getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition(), Row.CREATE_NULL_AS_BLANK);
         cell.setCellValue(value);
     }
 
@@ -158,12 +143,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         {
             return;
         }
-        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
-        Cell cell = row.getCell((int)index);
-        if (cell == null)
-        {
-            cell = row.createCell((int)index);
-        }
+        Cell cell = row.getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition(), Row.CREATE_NULL_AS_BLANK);
         cell.setCellValue(value);
     }
 
@@ -173,12 +153,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         {
             return;
         }
-        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
-        Cell cell = row.getCell((int)index);
-        if (cell == null)
-        {
-            cell = row.createCell((int)index);
-        }
+        Cell cell = row.getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition(), Row.CREATE_NULL_AS_BLANK);
         cell.setCellValue(value);
     }
 
@@ -188,12 +163,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         {
             return;
         }
-        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
-        Cell cell = row.getCell((int)index);
-        if (cell == null)
-        {
-            cell = row.createCell((int)index);
-        }
+        Cell cell = row.getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition(), Row.CREATE_NULL_AS_BLANK);
         cell.setCellValue(value);
     }
 
@@ -203,12 +173,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         {
             return;
         }
-        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
-        Cell cell = row.getCell((int)index);
-        if (cell == null)
-        {
-            cell = row.createCell((int)index);
-        }
+        Cell cell = row.getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition(), Row.CREATE_NULL_AS_BLANK);
         cell.setCellValue((double)value);
     }
 
@@ -218,12 +183,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         {
             return;
         }
-        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
-        Cell cell = row.getCell((int)index);
-        if (cell == null)
-        {
-            cell = row.createCell((int)index);
-        }
+        Cell cell = row.getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition(), Row.CREATE_NULL_AS_BLANK);
         cell.setCellValue(value);
     }
 
@@ -233,12 +193,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         {
             return;
         }
-        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
-        Cell cell = row.getCell((int)index);
-        if (cell == null)
-        {
-            cell = row.createCell((int)index);
-        }
+        Cell cell = row.getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition(), Row.CREATE_NULL_AS_BLANK);
         if (value == null)
         {
             row.removeCell(cell);
@@ -319,8 +274,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
             throw new NucleusException("Dont yet support members being mapped to multiple columns : " + mapping.getMemberMetaData().getFullFieldName());
         }
 
-        int index = getColumnMapping(fieldNumber).getColumn(0).getPosition();
-        Cell cell = row.getCell((int)index, Row.CREATE_NULL_AS_BLANK);
+        Cell cell = row.getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition(), Row.CREATE_NULL_AS_BLANK);
         if (value == null)
         {
             row.removeCell(cell);
@@ -393,8 +347,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                 }
                 else
                 {
-                    CreationHelper createHelper = row.getSheet().getWorkbook().getCreationHelper();
-                    cell.setCellValue(createHelper.createRichTextString(((Enum)value).name()));
+                    cell.setCellValue(row.getSheet().getWorkbook().getCreationHelper().createRichTextString(((Enum)value).name()));
                 }
             }
             else if (byte[].class == mmd.getType())
@@ -433,8 +386,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                     }
                 }
 
-                NucleusLogger.PERSISTENCE.warn(
-                    "DataNucleus doesnt currently support persistence of field " + mmd.getFullFieldName() + 
+                NucleusLogger.PERSISTENCE.warn("DataNucleus doesnt currently support persistence of field " + mmd.getFullFieldName() + 
                     " type=" + value.getClass().getName() + " - ignoring");
             }
         }
