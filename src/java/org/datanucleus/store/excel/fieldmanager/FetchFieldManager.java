@@ -38,6 +38,7 @@ import org.datanucleus.exceptions.NucleusUserException;
 import org.datanucleus.identity.IdentityUtils;
 import org.datanucleus.metadata.AbstractClassMetaData;
 import org.datanucleus.metadata.AbstractMemberMetaData;
+import org.datanucleus.metadata.JdbcType;
 import org.datanucleus.metadata.MetaDataUtils;
 import org.datanucleus.metadata.RelationType;
 import org.datanucleus.state.ObjectProvider;
@@ -47,6 +48,7 @@ import org.datanucleus.store.schema.table.Column;
 import org.datanucleus.store.schema.table.MemberColumnMapping;
 import org.datanucleus.store.schema.table.Table;
 import org.datanucleus.store.types.SCOUtils;
+import org.datanucleus.store.types.converters.MultiColumnConverter;
 import org.datanucleus.store.types.converters.TypeConverter;
 import org.datanucleus.store.types.converters.TypeConverterHelper;
 import org.datanucleus.util.Base64;
@@ -200,32 +202,28 @@ public class FetchFieldManager extends AbstractFetchFieldManager
             }
         }
 
-        return fetchObjectFieldFromCell(fieldNumber, mmd, clr, relationType);
+        return fetchObjectFieldInternal(fieldNumber, mmd, clr, relationType);
     }
 
-    protected Object fetchObjectFieldFromCell(int fieldNumber, AbstractMemberMetaData mmd, ClassLoaderResolver clr, RelationType relationType)
+    protected Object fetchObjectFieldInternal(int fieldNumber, AbstractMemberMetaData mmd, ClassLoaderResolver clr, RelationType relationType)
     {
         MemberColumnMapping mapping = getColumnMapping(fieldNumber);
-        if (mapping.getNumberOfColumns() > 1)
-        {
-            // TODO Support multicolumn mappings
-            throw new NucleusException("Dont yet support members being mapped to multiple columns : " + mapping.getMemberMetaData().getFullFieldName());
-        }
 
-        Cell cell = sheet.getRow(rowNumber).getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition());
-        if (cell == null)
-        {
-            return null;
-        }
-        else if (relationType == RelationType.NONE)
+        if (relationType == RelationType.NONE)
         {
             Column col = mapping.getColumn(0);
             if (mapping.getTypeConverter() != null)
             {
+                TypeConverter conv = mapping.getTypeConverter();
                 if (mapping.getNumberOfColumns() == 1)
                 {
+                    Cell cell = sheet.getRow(rowNumber).getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition());
+                    if (cell == null)
+                    {
+                        return null;
+                    }
+
                     Object value = null;
-                    TypeConverter conv = mapping.getTypeConverter();
                     Class datastoreType = TypeConverterHelper.getDatastoreTypeForTypeConverter(conv, mmd.getType());
                     if (datastoreType == String.class)
                     {
@@ -256,172 +254,139 @@ public class FetchFieldManager extends AbstractFetchFieldManager
                 }
                 else
                 {
-                    
+                    // Member stored in multiple columns and convertable using TypeConverter
+                    boolean isNull = true;
+                    Object valuesArr = null;
+                    Class[] colTypes = ((MultiColumnConverter)conv).getDatastoreColumnTypes();
+                    if (colTypes[0] == int.class)
+                    {
+                        valuesArr = new int[mapping.getNumberOfColumns()];
+                    }
+                    else if (colTypes[0] == long.class)
+                    {
+                        valuesArr = new long[mapping.getNumberOfColumns()];
+                    }
+                    else if (colTypes[0] == double.class)
+                    {
+                        valuesArr = new double[mapping.getNumberOfColumns()];
+                    }
+                    else if (colTypes[0] == float.class)
+                    {
+                        valuesArr = new double[mapping.getNumberOfColumns()];
+                    }
+                    else if (colTypes[0] == String.class)
+                    {
+                        valuesArr = new String[mapping.getNumberOfColumns()];
+                    }
+                    // TODO Support other types
+                    else
+                    {
+                        valuesArr = new Object[mapping.getNumberOfColumns()];
+                    }
+
+                    for (int i=0;i<mapping.getNumberOfColumns();i++)
+                    {
+                        Cell cell = sheet.getRow(rowNumber).getCell(mapping.getColumn(i).getPosition());
+                        if (cell == null)
+                        {
+                            Array.set(valuesArr, i, null);
+                        }
+                        else
+                        {
+                            isNull = false;
+                            if (colTypes[i] == int.class)
+                            {
+                                Object cellValue = getValueFromCellOfType(cell, Integer.class, mapping.getColumn(i).getJdbcType());
+                                Array.set(valuesArr, i, ((Integer)cellValue).intValue());
+                            }
+                            else if (colTypes[i] == long.class)
+                            {
+                                Object cellValue = getValueFromCellOfType(cell, Long.class, mapping.getColumn(i).getJdbcType());
+                                Array.set(valuesArr, i, ((Long)cellValue).longValue());
+                            }
+                            else
+                            {
+                                Object cellValue = getValueFromCellOfType(cell, colTypes[i], mapping.getColumn(i).getJdbcType());
+                                Array.set(valuesArr, i, cellValue);
+                            }
+                        }
+                    }
+                    if (isNull)
+                    {
+                        return null;
+                    }
+
+                    Object memberValue = conv.toMemberType(valuesArr);
+                    if (op != null)
+                    {
+                        memberValue = op.wrapSCOField(fieldNumber, memberValue, false, false, true);
+                    }
+                    return memberValue;
                 }
             }
-            else if (Date.class.isAssignableFrom(mmd.getType()))
+            else
             {
-                Date date = cell.getDateCellValue();
-                if (date == null)
+                Cell cell = sheet.getRow(rowNumber).getCell(mapping.getColumn(0).getPosition());
+                if (cell == null)
                 {
                     return null;
                 }
 
-                Object value = date;
-                if (mmd.getType() == java.sql.Date.class)
-                {
-                    value = new java.sql.Date(date.getTime());
-                }
-                else if (mmd.getType() == java.sql.Time.class)
-                {
-                    value = new java.sql.Time(date.getTime());
-                }
-                else if (mmd.getType() == java.sql.Timestamp.class)
-                {
-                    value = new java.sql.Timestamp(date.getTime());
-                }
-
-                if (op != null)
+                Object value = getValueFromCellOfType(cell, mmd.getType(), col.getJdbcType());
+                if (value != null && op != null)
                 {
                     return op.wrapSCOField(fieldNumber, value, false, false, true);
                 }
-                return value;
-            }
-            else if (Calendar.class.isAssignableFrom(mmd.getType()))
-            {
-                Date date = cell.getDateCellValue();
-                if (date == null)
-                {
-                    return null;
-                }
 
-                Calendar cal = Calendar.getInstance();
-                cal.setTime(date);
-                if (op != null)
+                // Fallback to String/Long TypeConverters
+                boolean useLong = MetaDataUtils.isJdbcTypeNumeric(col.getJdbcType());
+                TypeConverter strConv = ec.getNucleusContext().getTypeManager().getTypeConverterForType(mmd.getType(), String.class);
+                TypeConverter longConv = ec.getNucleusContext().getTypeManager().getTypeConverterForType(mmd.getType(), Long.class);
+                if (useLong && longConv != null)
                 {
-                    return op.wrapSCOField(fieldNumber, cal, false, false, true);
+                    value = longConv.toMemberType((long)cell.getNumericCellValue());
                 }
-                return cal;
-            }
-            else if (Boolean.class.isAssignableFrom(mmd.getType()))
-            {
-                boolean boolValue = cell.getBooleanCellValue();
-                return Boolean.valueOf(boolValue);
-            }
-            else if (Character.class.isAssignableFrom(mmd.getType()))
-            {
-                String strValue = cell.getRichStringCellValue().getString();
-                return Character.valueOf(strValue.charAt(0));
-            }
-            else if (Number.class.isAssignableFrom(mmd.getType()))
-            {
-                double val = cell.getNumericCellValue();
-                if (Double.class.isAssignableFrom(mmd.getType()))
+                else if (!useLong && strConv != null)
                 {
-                    return Double.valueOf(val);
-                }
-                else if (Float.class.isAssignableFrom(mmd.getType()))
-                {
-                    return Float.valueOf((float)val);
-                }
-                else if (Integer.class.isAssignableFrom(mmd.getType()))
-                {
-                    return Integer.valueOf((int)val);
-                }
-                else if (Long.class.isAssignableFrom(mmd.getType()))
-                {
-                    return Long.valueOf((long)val);
-                }
-                else if (Short.class.isAssignableFrom(mmd.getType()))
-                {
-                    return Short.valueOf((short)val);
-                }
-                else if (Byte.class.isAssignableFrom(mmd.getType()))
-                {
-                    return Byte.valueOf((byte)val);
-                }
-                else if (BigDecimal.class.isAssignableFrom(mmd.getType()))
-                {
-                    return new BigDecimal(val);
-                }
-                else if (BigInteger.class.isAssignableFrom(mmd.getType()))
-                {
-                    return new BigInteger("" + val);
-                }
-            }
-            else if (Enum.class.isAssignableFrom(mmd.getType()))
-            {
-                if (MetaDataUtils.isJdbcTypeNumeric(col.getJdbcType()))
-                {
-                    double value = cell.getNumericCellValue();
-                    return mmd.getType().getEnumConstants()[(int)value];
-                }
-                else
-                {
-                    String value = cell.getRichStringCellValue().getString();
-                    if (value != null && value.length() > 0)
+                    String cellValue = (cell.getRichStringCellValue() != null ? cell.getRichStringCellValue().getString() : null);
+                    if (cellValue != null && cellValue.length() > 0)
                     {
-                        return Enum.valueOf(mmd.getType(), value);
+                        value = strConv.toMemberType(cell.getRichStringCellValue().getString());
                     }
                     else
                     {
                         return null;
                     }
                 }
-            }
-            else if (mmd.getType() == byte[].class)
-            {
-                String value = cell.getStringCellValue();
-                if (value != null)
+                else if (!useLong && longConv != null)
                 {
-                    return Base64.decode(value);
-                }
-            }
-
-            boolean useLong = MetaDataUtils.isJdbcTypeNumeric(col.getJdbcType());
-
-            // See if we can persist it using built-in converters
-            Object value = null;
-            TypeConverter strConv = ec.getNucleusContext().getTypeManager().getTypeConverterForType(mmd.getType(), String.class);
-            TypeConverter longConv = ec.getNucleusContext().getTypeManager().getTypeConverterForType(mmd.getType(), Long.class);
-            if (useLong && longConv != null)
-            {
-                value = longConv.toMemberType((long)cell.getNumericCellValue());
-            }
-            else if (!useLong && strConv != null)
-            {
-                String cellValue = (cell.getRichStringCellValue() != null ? cell.getRichStringCellValue().getString() : null);
-                if (cellValue != null && cellValue.length() > 0)
-                {
-                    value = strConv.toMemberType(cell.getRichStringCellValue().getString());
+                    value = longConv.toMemberType((long)cell.getNumericCellValue());
                 }
                 else
                 {
+                    // Not supported as String so just set to null
+                    NucleusLogger.PERSISTENCE.warn("Field " + mmd.getFullFieldName() + 
+                            " could not be set in the object since it is not persistable to Excel");
                     return null;
                 }
-            }
-            else if (!useLong && longConv != null)
-            {
-                value = longConv.toMemberType((long)cell.getNumericCellValue());
-            }
-            else
-            {
-                // Not supported as String so just set to null
-                NucleusLogger.PERSISTENCE.warn("Field " + mmd.getFullFieldName() + 
-                    " could not be set in the object since it is not persistable to Excel");
-                return null;
-            }
 
-            // Wrap the field if it is SCO
-            if (op != null)
-            {
-                return op.wrapSCOField(fieldNumber, value, false, false, true);
+                // Wrap the field if it is SCO
+                if (op != null)
+                {
+                    return op.wrapSCOField(fieldNumber, value, false, false, true);
+                }
+                return value;
             }
-            return value;
         }
         else if (RelationType.isRelationSingleValued(relationType))
         {
             // Persistable object stored as String reference of the identity
+            Cell cell = sheet.getRow(rowNumber).getCell(mapping.getColumn(0).getPosition());
+            if (cell == null)
+            {
+                return null;
+            }
+
             String idStr = cell.getRichStringCellValue().getString();
             if (idStr == null)
             {
@@ -453,6 +418,12 @@ public class FetchFieldManager extends AbstractFetchFieldManager
         else if (RelationType.isRelationMultiValued(relationType))
         {
             // Collection/Map/Array
+            Cell cell = sheet.getRow(rowNumber).getCell(mapping.getColumn(0).getPosition());
+            if (cell == null)
+            {
+                return null;
+            }
+
             String cellStr = cell.getRichStringCellValue().getString();
             if (cellStr == null)
             {
@@ -646,5 +617,119 @@ public class FetchFieldManager extends AbstractFetchFieldManager
             }
         }
         throw new NucleusException("Dont currently support retrieval of type " + mmd.getTypeName());
+    }
+
+    protected Object getValueFromCellOfType(Cell cell, Class requiredType, JdbcType jdbcType)
+    {
+        if (Date.class.isAssignableFrom(requiredType))
+        {
+            Date date = cell.getDateCellValue();
+            if (date == null)
+            {
+                return null;
+            }
+
+            Object value = date;
+            if (requiredType == java.sql.Date.class)
+            {
+                value = new java.sql.Date(date.getTime());
+            }
+            else if (requiredType == java.sql.Time.class)
+            {
+                value = new java.sql.Time(date.getTime());
+            }
+            else if (requiredType == java.sql.Timestamp.class)
+            {
+                value = new java.sql.Timestamp(date.getTime());
+            }
+            return value;
+        }
+        else if (Calendar.class.isAssignableFrom(requiredType))
+        {
+            Date date = cell.getDateCellValue();
+            if (date == null)
+            {
+                return null;
+            }
+
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(date);
+            return cal;
+        }
+        else if (Boolean.class.isAssignableFrom(requiredType))
+        {
+            boolean boolValue = cell.getBooleanCellValue();
+            return Boolean.valueOf(boolValue);
+        }
+        else if (Character.class.isAssignableFrom(requiredType))
+        {
+            String strValue = cell.getRichStringCellValue().getString();
+            return Character.valueOf(strValue.charAt(0));
+        }
+        else if (Number.class.isAssignableFrom(requiredType))
+        {
+            double val = cell.getNumericCellValue();
+            if (Double.class.isAssignableFrom(requiredType))
+            {
+                return Double.valueOf(val);
+            }
+            else if (Float.class.isAssignableFrom(requiredType))
+            {
+                return Float.valueOf((float)val);
+            }
+            else if (Integer.class.isAssignableFrom(requiredType))
+            {
+                return Integer.valueOf((int)val);
+            }
+            else if (Long.class.isAssignableFrom(requiredType))
+            {
+                return Long.valueOf((long)val);
+            }
+            else if (Short.class.isAssignableFrom(requiredType))
+            {
+                return Short.valueOf((short)val);
+            }
+            else if (Byte.class.isAssignableFrom(requiredType))
+            {
+                return Byte.valueOf((byte)val);
+            }
+            else if (BigDecimal.class.isAssignableFrom(requiredType))
+            {
+                return new BigDecimal(val);
+            }
+            else if (BigInteger.class.isAssignableFrom(requiredType))
+            {
+                return new BigInteger("" + val);
+            }
+        }
+        else if (Enum.class.isAssignableFrom(requiredType))
+        {
+            if (MetaDataUtils.isJdbcTypeNumeric(jdbcType))
+            {
+                double value = cell.getNumericCellValue();
+                return requiredType.getEnumConstants()[(int)value];
+            }
+            else
+            {
+                String value = cell.getRichStringCellValue().getString();
+                if (value != null && value.length() > 0)
+                {
+                    return Enum.valueOf(requiredType, value);
+                }
+                else
+                {
+                    return null;
+                }
+            }
+        }
+        else if (requiredType == byte[].class)
+        {
+            String value = cell.getStringCellValue();
+            if (value != null)
+            {
+                return Base64.decode(value);
+            }
+        }
+        return null;
     }
 }

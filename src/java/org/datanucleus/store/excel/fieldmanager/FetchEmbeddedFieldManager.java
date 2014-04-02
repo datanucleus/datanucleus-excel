@@ -97,6 +97,6 @@ public class FetchEmbeddedFieldManager extends FetchFieldManager
             return null; // Remove this when we support embedded
         }
 
-        return fetchObjectFieldFromCell(fieldNumber, mmd, clr, relationType);
+        return fetchObjectFieldInternal(fieldNumber, mmd, clr, relationType);
     }
 }

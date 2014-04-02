@@ -34,12 +34,12 @@ import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.Row;
 import org.datanucleus.ClassLoaderResolver;
 import org.datanucleus.ExecutionContext;
-import org.datanucleus.exceptions.NucleusException;
 import org.datanucleus.exceptions.NucleusUserException;
 import org.datanucleus.identity.IdentityUtils;
 import org.datanucleus.metadata.AbstractClassMetaData;
 import org.datanucleus.metadata.AbstractMemberMetaData;
 import org.datanucleus.metadata.IdentityType;
+import org.datanucleus.metadata.JdbcType;
 import org.datanucleus.metadata.MetaDataUtils;
 import org.datanucleus.metadata.RelationType;
 import org.datanucleus.state.ObjectProvider;
@@ -47,6 +47,7 @@ import org.datanucleus.store.fieldmanager.AbstractStoreFieldManager;
 import org.datanucleus.store.schema.table.MemberColumnMapping;
 import org.datanucleus.store.schema.table.Table;
 import org.datanucleus.store.types.TypeManager;
+import org.datanucleus.store.types.converters.MultiColumnConverter;
 import org.datanucleus.store.types.converters.TypeConverter;
 import org.datanucleus.store.types.converters.TypeConverterHelper;
 import org.datanucleus.util.Base64;
@@ -262,130 +263,118 @@ public class StoreFieldManager extends AbstractStoreFieldManager
             }
         }
 
-        storeObjectFieldInCell(fieldNumber, value, mmd, clr, relationType);
+        storeObjectFieldInternal(fieldNumber, value, mmd, clr, relationType);
     }
 
-    protected void storeObjectFieldInCell(int fieldNumber, Object value, AbstractMemberMetaData mmd, ClassLoaderResolver clr, RelationType relationType)
+    protected void storeObjectFieldInternal(int fieldNumber, Object value, AbstractMemberMetaData mmd, ClassLoaderResolver clr, RelationType relationType)
     {
         MemberColumnMapping mapping = getColumnMapping(fieldNumber);
-        if (mapping.getNumberOfColumns() > 1)
-        {
-            // TODO Support multicolumn mappings
-            throw new NucleusException("Dont yet support members being mapped to multiple columns : " + mapping.getMemberMetaData().getFullFieldName());
-        }
 
-        Cell cell = row.getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition(), Row.CREATE_NULL_AS_BLANK);
-        if (value == null)
-        {
-            row.removeCell(cell);
-        }
-        else if (relationType == RelationType.NONE)
+        if (relationType == RelationType.NONE)
         {
             if (mapping.getTypeConverter() != null)
             {
                 // Persist using the provided converter
-                Object datastoreValue = mapping.getTypeConverter().toDatastoreType(value);
-                Class datastoreType = TypeConverterHelper.getDatastoreTypeForTypeConverter(mapping.getTypeConverter(), mmd.getType());
+                TypeConverter conv = mapping.getTypeConverter();
+                Object datastoreValue = conv.toDatastoreType(value);
+                Class datastoreType = TypeConverterHelper.getDatastoreTypeForTypeConverter(conv, mmd.getType());
                 if (mapping.getNumberOfColumns() == 1)
                 {
-                    if (datastoreType == String.class)
+                    Cell cell = row.getCell(mapping.getColumn(0).getPosition(), Row.CREATE_NULL_AS_BLANK);
+                    if (value == null)
                     {
-                        CreationHelper createHelper = row.getSheet().getWorkbook().getCreationHelper();
-                        cell.setCellValue(createHelper.createRichTextString((String)datastoreValue));
+                        row.removeCell(cell);
                         return;
                     }
-                    else if (Number.class.isAssignableFrom(datastoreType))
+
+                    boolean cellSet = setValueInCellForType(datastoreValue, datastoreType, cell, mapping.getColumn(0).getJdbcType());
+                    if (!cellSet)
                     {
-                        cell.setCellValue((Double)datastoreValue);
-                        return;
-                    }
-                    else if (Boolean.class.isAssignableFrom(datastoreType))
-                    {
-                        cell.setCellValue((Boolean)datastoreValue);
-                        return;
-                    }
-                    else if (Date.class.isAssignableFrom(datastoreType))
-                    {
-                        cell.setCellValue((Date)datastoreValue);
-                        return;
-                    }
-                    else
-                    {
-                        NucleusLogger.DATASTORE_PERSIST.warn("TypeConverter for member " + mmd.getFullFieldName() + " converts to " + datastoreType.getName() + " - not yet supported");
+                        NucleusLogger.DATASTORE_PERSIST.warn("TypeConverter for member " + mmd.getFullFieldName() + " converts to " + datastoreType.getName() + 
+                            " - not yet supported for storing in Excel cell");
                     }
                 }
                 else
                 {
-                    // TODO Support multicolumn conversion
+                    if (value == null)
+                    {
+                        for (int i=0;i<mapping.getNumberOfColumns();i++)
+                        {
+                            Cell cell = row.getCell(mapping.getColumn(0).getPosition());
+                            if (cell != null)
+                            {
+                                row.removeCell(cell);
+                            }
+                        }
+                        return;
+                    }
+
+                    Class[] colTypes = ((MultiColumnConverter)conv).getDatastoreColumnTypes();
+                    for (int i=0;i<mapping.getNumberOfColumns();i++)
+                    {
+                        // Set each component cell
+                        Cell cell = row.getCell(mapping.getColumn(i).getPosition(), Row.CREATE_NULL_AS_BLANK);
+                        Object cellValue = Array.get(datastoreValue, i);
+                        Class cellValueType = colTypes[i];
+                        if (cellValueType == int.class)
+                        {
+                            cellValueType = Integer.class;
+                        }
+                        if (cellValueType == long.class)
+                        {
+                            cellValueType = Long.class;
+                        }
+                        boolean cellSet = setValueInCellForType(cellValue, cellValueType, cell, mapping.getColumn(i).getJdbcType());
+                        if (!cellSet)
+                        {
+                            NucleusLogger.DATASTORE_PERSIST.warn("TypeConverter for member " + mmd.getFullFieldName() + " converts to column " + i + 
+                                " having value of type " + datastoreType.getName() + " - not yet supported for storing in Excel cell");
+                        }
+                    }
                 }
-            }
-            else if (Number.class.isAssignableFrom(mmd.getType()))
-            {
-                cell.setCellValue(((Number)value).doubleValue());
-            }
-            else if (Character.class.isAssignableFrom(mmd.getType()))
-            {
-                cell.setCellValue(row.getSheet().getWorkbook().getCreationHelper().createRichTextString("" + value));
-            }
-            else if (Boolean.class.isAssignableFrom(mmd.getType()))
-            {
-                cell.setCellValue(((Boolean)value).booleanValue());
-            }
-            else if (Date.class.isAssignableFrom(mmd.getType()))
-            {
-                cell.setCellValue((Date)value);
-            }
-            else if (Calendar.class.isAssignableFrom(mmd.getType()))
-            {
-                cell.setCellValue((Calendar)value);
-            }
-            else if (Enum.class.isAssignableFrom(mmd.getType()))
-            {
-                if (MetaDataUtils.isJdbcTypeNumeric(mapping.getColumn(0).getJdbcType()))
-                {
-                    cell.setCellValue(((Enum)value).ordinal());
-                }
-                else
-                {
-                    cell.setCellValue(row.getSheet().getWorkbook().getCreationHelper().createRichTextString(((Enum)value).name()));
-                }
-            }
-            else if (byte[].class == mmd.getType())
-            {
-                String strValue = new String(Base64.encode((byte[]) value));
-                cell.setCellValue(strValue);
+                return;
             }
             else
             {
-                // Try to persist using converters
-                TypeManager typeMgr = ec.getNucleusContext().getTypeManager();
-                boolean useLong = MetaDataUtils.isJdbcTypeNumeric(mapping.getColumn(0).getJdbcType());
-
-                TypeConverter longConv = typeMgr.getTypeConverterForType(mmd.getType(), Long.class);
-                if (useLong)
+                Cell cell = row.getCell(mapping.getColumn(0).getPosition(), Row.CREATE_NULL_AS_BLANK);
+                if (value == null)
                 {
-                    if (longConv != null)
-                    {
-                        cell.setCellValue((Long)longConv.toDatastoreType(value));
-                        return;
-                    }
-                }
-                else
-                {
-                    TypeConverter strConv = typeMgr.getTypeConverterForType(mmd.getType(), String.class);
-                    if (strConv != null)
-                    {
-                        CreationHelper createHelper = row.getSheet().getWorkbook().getCreationHelper();
-                        cell.setCellValue(createHelper.createRichTextString((String) strConv.toDatastoreType(value)));
-                        return;
-                    }
-                    else if (longConv != null)
-                    {
-                        cell.setCellValue((Long)longConv.toDatastoreType(value));
-                        return;
-                    }
+                    row.removeCell(cell);
+                    return;
                 }
 
+                boolean cellSet = setValueInCellForType(value, mmd.getType(), cell, mapping.getColumn(0).getJdbcType());
+                if (!cellSet)
+                {
+                    // Try to persist using converters
+                    TypeManager typeMgr = ec.getNucleusContext().getTypeManager();
+                    boolean useLong = MetaDataUtils.isJdbcTypeNumeric(mapping.getColumn(0).getJdbcType());
+
+                    TypeConverter longConv = typeMgr.getTypeConverterForType(mmd.getType(), Long.class);
+                    if (useLong)
+                    {
+                        if (longConv != null)
+                        {
+                            cell.setCellValue((Long)longConv.toDatastoreType(value));
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        TypeConverter strConv = typeMgr.getTypeConverterForType(mmd.getType(), String.class);
+                        if (strConv != null)
+                        {
+                            CreationHelper createHelper = row.getSheet().getWorkbook().getCreationHelper();
+                            cell.setCellValue(createHelper.createRichTextString((String) strConv.toDatastoreType(value)));
+                            return;
+                        }
+                        else if (longConv != null)
+                        {
+                            cell.setCellValue((Long)longConv.toDatastoreType(value));
+                            return;
+                        }
+                    }
+                }
                 NucleusLogger.PERSISTENCE.warn("DataNucleus doesnt currently support persistence of field " + mmd.getFullFieldName() + 
                     " type=" + value.getClass().getName() + " - ignoring");
             }
@@ -393,14 +382,29 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         else if (RelationType.isRelationSingleValued(relationType))
         {
             // Persistable object - persist the related object and store the identity in the cell
+            Cell cell = row.getCell(mapping.getColumn(0).getPosition(), Row.CREATE_NULL_AS_BLANK);
+            if (value == null)
+            {
+                row.removeCell(cell);
+                return;
+            }
+
             Object valuePC = ec.persistObjectInternal(value, op, fieldNumber, -1);
             Object valueId = ec.getApiAdapter().getIdForObject(valuePC);
             CreationHelper createHelper = row.getSheet().getWorkbook().getCreationHelper();
             cell.setCellValue(createHelper.createRichTextString("[" + IdentityUtils.getPersistableIdentityForId(ec.getApiAdapter(), valueId) + "]"));
+            return;
         }
         else if (RelationType.isRelationMultiValued(relationType))
         {
             // Collection/Map/Array
+            Cell cell = row.getCell(mapping.getColumn(0).getPosition(), Row.CREATE_NULL_AS_BLANK);
+            if (value == null)
+            {
+                row.removeCell(cell);
+                return;
+            }
+
             if (mmd.hasCollection())
             {
                 StringBuffer cellValue = new StringBuffer("[");
@@ -482,6 +486,52 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                 CreationHelper createHelper = row.getSheet().getWorkbook().getCreationHelper();
                 cell.setCellValue(createHelper.createRichTextString(cellValue.toString()));
             }
+            return;
         }
+    }
+
+    protected boolean setValueInCellForType(Object value, Class type, Cell cell, JdbcType jdbcType)
+    {
+        if (Number.class.isAssignableFrom(type))
+        {
+            cell.setCellValue(((Number)value).doubleValue());
+        }
+        else if (Character.class.isAssignableFrom(type))
+        {
+            cell.setCellValue(row.getSheet().getWorkbook().getCreationHelper().createRichTextString("" + value));
+        }
+        else if (Boolean.class.isAssignableFrom(type))
+        {
+            cell.setCellValue(((Boolean)value).booleanValue());
+        }
+        else if (Date.class.isAssignableFrom(type))
+        {
+            cell.setCellValue((Date)value);
+        }
+        else if (Calendar.class.isAssignableFrom(type))
+        {
+            cell.setCellValue((Calendar)value);
+        }
+        else if (Enum.class.isAssignableFrom(type))
+        {
+            if (MetaDataUtils.isJdbcTypeNumeric(jdbcType))
+            {
+                cell.setCellValue(((Enum)value).ordinal());
+            }
+            else
+            {
+                cell.setCellValue(row.getSheet().getWorkbook().getCreationHelper().createRichTextString(((Enum)value).name()));
+            }
+        }
+        else if (byte[].class == type)
+        {
+            String strValue = new String(Base64.encode((byte[]) value));
+            cell.setCellValue(strValue);
+        }
+        else
+        {
+            return false;
+        }
+        return true;
     }
 }
