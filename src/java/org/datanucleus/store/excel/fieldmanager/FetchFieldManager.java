@@ -311,13 +311,14 @@ public class FetchFieldManager extends AbstractFetchFieldManager
                             }
                         }
                     }
+
                     if (isNull)
                     {
                         return null;
                     }
 
                     Object memberValue = conv.toMemberType(valuesArr);
-                    if (op != null)
+                    if (op != null && memberValue != null)
                     {
                         memberValue = op.wrapSCOField(fieldNumber, memberValue, false, false, true);
                     }
