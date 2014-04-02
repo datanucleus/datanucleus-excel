@@ -528,6 +528,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
             String strValue = new String(Base64.encode((byte[]) value));
             cell.setCellValue(strValue);
         }
+        // TODO Persist Collection of String as comma-separated?
         else
         {
             return false;
