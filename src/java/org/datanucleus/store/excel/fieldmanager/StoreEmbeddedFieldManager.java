@@ -86,7 +86,7 @@ public class StoreEmbeddedFieldManager extends StoreFieldManager
             return;
         }
 
-        RelationType relationType = mmd.getRelationType(op.getExecutionContext().getClassLoaderResolver());
+        RelationType relationType = mmd.getRelationType(clr);
         if (relationType != RelationType.NONE && MetaDataUtils.getInstance().isMemberEmbedded(ec.getMetaDataManager(), clr, mmd, relationType, lastMmd))
         {
             // Embedded field
