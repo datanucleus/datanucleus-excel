@@ -29,13 +29,12 @@ import org.datanucleus.exceptions.NucleusUserException;
 import org.datanucleus.store.connection.ManagedConnection;
 import org.datanucleus.store.valuegenerator.AbstractDatastoreGenerator;
 import org.datanucleus.store.valuegenerator.ValueGenerationBlock;
-import org.datanucleus.store.valuegenerator.ValueGenerator;
 import org.datanucleus.util.NucleusLogger;
 
 /**
  * Generator that uses a collection in Excel to store and allocate identity values.
  */
-public class IncrementGenerator extends AbstractDatastoreGenerator implements ValueGenerator
+public class IncrementGenerator extends AbstractDatastoreGenerator<Long>
 {
     static final String INCREMENT_COL_NAME = "increment";
 
@@ -86,7 +85,7 @@ public class IncrementGenerator extends AbstractDatastoreGenerator implements Va
     /* (non-Javadoc)
      * @see org.datanucleus.store.valuegenerator.AbstractGenerator#reserveBlock(long)
      */
-    protected ValueGenerationBlock reserveBlock(long size)
+    protected ValueGenerationBlock<Long> reserveBlock(long size)
     {
         if (size < 1)
         {
@@ -95,7 +94,7 @@ public class IncrementGenerator extends AbstractDatastoreGenerator implements Va
 
         // Allocate value(s)
         ManagedConnection mconn = connectionProvider.retrieveConnection();
-        List oids = new ArrayList();
+        List<Long> oids = new ArrayList<Long>();
         try
         {
             // Create the worksheet if not existing
@@ -158,6 +157,6 @@ public class IncrementGenerator extends AbstractDatastoreGenerator implements Va
         {
             connectionProvider.releaseConnection();
         }
-        return new ValueGenerationBlock(oids);
+        return new ValueGenerationBlock<Long>(oids);
     }
 }
