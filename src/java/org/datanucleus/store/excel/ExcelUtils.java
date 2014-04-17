@@ -100,7 +100,7 @@ public class ExcelUtils
                     ObjectProvider embOP = ec.findObjectProvider(fieldValue);
                     if (embOP == null)
                     {
-                        embOP = ec.newObjectProviderForEmbedded(fieldValue, false, op, pkFieldNumbers[i]);
+                        embOP = ec.getNucleusContext().getObjectProviderFactory().newForEmbedded(ec, fieldValue, false, op, pkFieldNumbers[i]);
                     }
                     AbstractClassMetaData embCmd = op.getExecutionContext().getMetaDataManager().getMetaDataForClass(mmd.getType(), clr);
                     for (int j=0;j<embCmd.getNoOfManagedMembers();j++)
@@ -217,7 +217,7 @@ public class ExcelUtils
                     ObjectProvider embOP = ec.findObjectProvider(fieldValue);
                     if (embOP == null)
                     {
-                        embOP = ec.newObjectProviderForEmbedded(fieldValue, false, op, fieldNumbers[i]);
+                        embOP = ec.getNucleusContext().getObjectProviderFactory().newForEmbedded(ec, fieldValue, false, op, fieldNumbers[i]);
                     }
                     AbstractClassMetaData embCmd = op.getExecutionContext().getMetaDataManager().getMetaDataForClass(mmd.getType(), clr);
                     for (int j=0;j<embCmd.getNoOfManagedMembers();j++)

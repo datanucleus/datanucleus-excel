@@ -104,7 +104,7 @@ public class StoreEmbeddedFieldManager extends StoreFieldManager
                     }
                     else
                     {
-                        embSM = ec.newObjectProviderForEmbedded(embcmd, op, fieldNumber);
+                        embSM = ec.getNucleusContext().getObjectProviderFactory().newForEmbedded(ec, embcmd, op, fieldNumber);
                     }
 
                     List<AbstractMemberMetaData> embMmds = new ArrayList<AbstractMemberMetaData>(mmds);
