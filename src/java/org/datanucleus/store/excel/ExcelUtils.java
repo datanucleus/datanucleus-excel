@@ -28,7 +28,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.datanucleus.ClassLoaderResolver;
 import org.datanucleus.ExecutionContext;
 import org.datanucleus.exceptions.NucleusDataStoreException;
-import org.datanucleus.identity.OID;
+import org.datanucleus.identity.IdentityUtils;
 import org.datanucleus.metadata.AbstractClassMetaData;
 import org.datanucleus.metadata.AbstractMemberMetaData;
 import org.datanucleus.metadata.IdentityType;
@@ -44,8 +44,7 @@ import org.datanucleus.util.Localiser;
 public class ExcelUtils
 {
     /** Localiser for messages. */
-    protected static final Localiser LOCALISER = Localiser.getInstance(
-        "org.datanucleus.store.excel.Localisation", ExcelStoreManager.class.getClassLoader());
+    protected static final Localiser LOCALISER = Localiser.getInstance("org.datanucleus.store.excel.Localisation", ExcelStoreManager.class.getClassLoader());
 
     /**
      * Convenience method to return the worksheet used for storing the specified object.
@@ -160,7 +159,7 @@ public class ExcelUtils
             String sheetName = op.getExecutionContext().getStoreManager().getNamingFactory().getTableName(cmd);
             final Sheet sheet = wb.getSheet(sheetName);
             int datastoreIdColNo = table.getDatastoreIdColumn().getPosition();
-            Object key = ((OID)op.getInternalObjectId()).getKeyValue();
+            Object key = IdentityUtils.getTargetKeyForDatastoreIdentity(op.getInternalObjectId());
             if (sheet != null)
             {
                 for (int i=0; i<sheet.getLastRowNum()+1; i++)

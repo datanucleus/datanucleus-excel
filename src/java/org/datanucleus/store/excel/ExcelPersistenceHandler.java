@@ -31,7 +31,7 @@ import org.datanucleus.exceptions.NucleusDataStoreException;
 import org.datanucleus.exceptions.NucleusObjectNotFoundException;
 import org.datanucleus.exceptions.NucleusOptimisticException;
 import org.datanucleus.exceptions.NucleusUserException;
-import org.datanucleus.identity.OID;
+import org.datanucleus.identity.IdentityUtils;
 import org.datanucleus.metadata.AbstractClassMetaData;
 import org.datanucleus.metadata.AbstractMemberMetaData;
 import org.datanucleus.metadata.IdentityType;
@@ -173,7 +173,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
             {
                 // Set the datastore identity column value
                 int idCellNum = table.getDatastoreIdColumn().getPosition();
-                Object key = ((OID)op.getInternalObjectId()).getKeyValue();
+                Object key = IdentityUtils.getTargetKeyForDatastoreIdentity(op.getInternalObjectId());
                 Cell idCell = row.getCell(idCellNum);
                 if (idCell == null)
                 {
