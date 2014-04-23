@@ -29,7 +29,6 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.datanucleus.ExecutionContext;
 import org.datanucleus.FetchPlan;
 import org.datanucleus.identity.IdentityUtils;
-import org.datanucleus.identity.OIDFactory;
 import org.datanucleus.identity.SCOID;
 import org.datanucleus.metadata.AbstractClassMetaData;
 import org.datanucleus.metadata.AbstractMemberMetaData;
@@ -221,12 +220,12 @@ public class ExcelCandidateList extends AbstractCandidateLazyLoadList
                                     if (type == Cell.CELL_TYPE_STRING)
                                     {
                                         String key = idCell.getRichStringCellValue().getString();
-                                        id = OIDFactory.getInstance(ec.getNucleusContext(), cmd.getFullClassName(), key);
+                                        id = ec.getNucleusContext().getIdentityManager().getDatastoreId(cmd.getFullClassName(), key);
                                     }
                                     else if (type == Cell.CELL_TYPE_NUMERIC)
                                     {
                                         long key = (long)idCell.getNumericCellValue();
-                                        id = OIDFactory.getInstance(ec.getNucleusContext(), cmd.getFullClassName(), key);
+                                        id = ec.getNucleusContext().getIdentityManager().getDatastoreId(cmd.getFullClassName(), key);
                                     }
                                     return ec.findObject(id, new FieldValues()
                                     {
