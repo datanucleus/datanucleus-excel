@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.datanucleus.ExecutionContext;
+import org.datanucleus.exceptions.NucleusException;
 import org.datanucleus.query.evaluator.JDOQLEvaluator;
 import org.datanucleus.query.evaluator.JavaQueryEvaluator;
 import org.datanucleus.store.StoreManager;
@@ -110,7 +111,20 @@ public class JDOQLQuery extends AbstractJDOQLQuery
                     "" + (System.currentTimeMillis() - startTime)));
             }
 
-            return results;
+            if (type == BULK_DELETE)
+            {
+                ec.deleteObjects(results.toArray());
+                return Long.valueOf(results.size());
+            }
+            else if (type == BULK_UPDATE)
+            {
+                // TODO Support BULK UPDATE
+                throw new NucleusException("Bulk Update is not yet supported");
+            }
+            else
+            {
+                return results;
+            }
         }
         finally
         {
