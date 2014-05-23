@@ -30,6 +30,7 @@ import org.datanucleus.store.StoreManager;
 import org.datanucleus.store.connection.ManagedConnection;
 import org.datanucleus.store.query.AbstractJPQLQuery;
 import org.datanucleus.store.query.Query;
+import org.datanucleus.util.Localiser;
 import org.datanucleus.util.NucleusLogger;
 
 /**
@@ -86,7 +87,7 @@ public class JPQLQuery extends AbstractJPQLQuery
             if (NucleusLogger.QUERY.isDebugEnabled())
             {
                 startTime = System.currentTimeMillis();
-                NucleusLogger.QUERY.debug(LOCALISER.msg("021046", "JPQL", getSingleStringQuery(), null));
+                NucleusLogger.QUERY.debug(Localiser.msg("021046", "JPQL", getSingleStringQuery(), null));
             }
             List candidates = null;
             if (candidateCollection == null)
@@ -106,7 +107,7 @@ public class JPQLQuery extends AbstractJPQLQuery
 
             if (NucleusLogger.QUERY.isDebugEnabled())
             {
-                NucleusLogger.QUERY.debug(LOCALISER.msg("021074", "JPQL", 
+                NucleusLogger.QUERY.debug(Localiser.msg("021074", "JPQL", 
                     "" + (System.currentTimeMillis() - startTime)));
             }
 

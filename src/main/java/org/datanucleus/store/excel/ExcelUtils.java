@@ -43,9 +43,6 @@ import org.datanucleus.util.Localiser;
  */
 public class ExcelUtils
 {
-    /** Localiser for messages. */
-    protected static final Localiser LOCALISER = Localiser.getInstance("org.datanucleus.store.excel.Localisation", ExcelStoreManager.class.getClassLoader());
-
     /**
      * Convenience method to return the worksheet used for storing the specified object.
      * @param op ObjectProvider for the object
@@ -60,8 +57,7 @@ public class ExcelUtils
         final Sheet sheet = wb.getSheet(sheetName);
         if (sheet == null)
         {
-            throw new NucleusDataStoreException(LOCALISER.msg("Excel.SheetNotFoundForWorkbook",
-                sheetName, op.getObjectAsPrintable()));
+            throw new NucleusDataStoreException(Localiser.msg("Excel.SheetNotFoundForWorkbook", sheetName, op.getObjectAsPrintable()));
         }
         return sheet;
     }

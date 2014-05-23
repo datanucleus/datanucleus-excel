@@ -37,10 +37,6 @@ import org.datanucleus.util.NucleusLogger;
  */
 public class ExcelSchemaHandler extends AbstractStoreSchemaHandler
 {
-    /** Localiser for messages. */
-    protected static final Localiser LOCALISER = Localiser.getInstance(
-        "org.datanucleus.Localisation", org.datanucleus.ClassConstants.NUCLEUS_CONTEXT_LOADER);
-
     public ExcelSchemaHandler(StoreManager storeMgr)
     {
         super(storeMgr);
@@ -79,7 +75,7 @@ public class ExcelSchemaHandler extends AbstractStoreSchemaHandler
                         sheet = wb.createSheet(sheetName);
                         if (NucleusLogger.DATASTORE_PERSIST.isDebugEnabled())
                         {
-                            NucleusLogger.DATASTORE_PERSIST.debug(LOCALISER.msg("Excel.SchemaCreate.Class",
+                            NucleusLogger.DATASTORE_PERSIST.debug(Localiser.msg("Excel.SchemaCreate.Class",
                                 cmd.getFullClassName(), sheetName));
                         }
 
@@ -133,8 +129,7 @@ public class ExcelSchemaHandler extends AbstractStoreSchemaHandler
                         wb.removeSheetAt(wb.getSheetIndex(sheetName));
                         if (NucleusLogger.DATASTORE_PERSIST.isDebugEnabled())
                         {
-                            NucleusLogger.DATASTORE_PERSIST.debug(LOCALISER.msg("Excel.SchemaDelete.Class",
-                                cmd.getFullClassName(), sheetName));
+                            NucleusLogger.DATASTORE_PERSIST.debug(Localiser.msg("Excel.SchemaDelete.Class", cmd.getFullClassName(), sheetName));
                         }
                     }
                 }

@@ -36,6 +36,7 @@ import org.datanucleus.store.connection.ManagedConnection;
 import org.datanucleus.store.schema.SchemaAwareStoreManager;
 import org.datanucleus.store.schema.table.CompleteClassTable;
 import org.datanucleus.util.ClassUtils;
+import org.datanucleus.util.Localiser;
 
 /**
  * StoreManager for data access to Excel documents (XSL or OOXML).
@@ -43,6 +44,12 @@ import org.datanucleus.util.ClassUtils;
  */
 public abstract class ExcelStoreManager extends AbstractStoreManager implements SchemaAwareStoreManager
 {
+    static
+    {
+        // Register our localisation
+        Localiser.registerBundle("org.datanucleus.store.excel.Localisation", ExcelStoreManager.class.getClassLoader());
+    }
+
     public ExcelStoreManager(String storeMgrKey, ClassLoaderResolver clr, PersistenceNucleusContext ctx, Map<String, Object> props)
     {
         super(storeMgrKey, clr, ctx, props);

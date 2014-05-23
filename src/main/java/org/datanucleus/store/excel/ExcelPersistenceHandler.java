@@ -66,10 +66,6 @@ import org.datanucleus.util.StringUtils;
  */
 public class ExcelPersistenceHandler extends AbstractPersistenceHandler
 {
-    /** Localiser for messages. */
-    protected static final Localiser LOCALISER_EXCEL = Localiser.getInstance(
-        "org.datanucleus.store.excel.Localisation", ExcelStoreManager.class.getClassLoader());
-
     /**
      * Constructor.
      * @param storeMgr Manager for the datastore
@@ -101,8 +97,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
             long startTime = System.currentTimeMillis();
             if (NucleusLogger.DATASTORE_PERSIST.isDebugEnabled())
             {
-                NucleusLogger.DATASTORE_PERSIST.debug(LOCALISER_EXCEL.msg("Excel.Insert.Start", 
-                    op.getObjectAsPrintable(), op.getInternalObjectId()));
+                NucleusLogger.DATASTORE_PERSIST.debug(Localiser.msg("Excel.Insert.Start", op.getObjectAsPrintable(), op.getInternalObjectId()));
             }
 
             Workbook wb = (Workbook) mconn.getConnection();
@@ -119,7 +114,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                 try
                 {
                     locateObject(op);
-                    throw new NucleusUserException(LOCALISER_EXCEL.msg("Excel.Insert.ObjectWithIdAlreadyExists",
+                    throw new NucleusUserException(Localiser.msg("Excel.Insert.ObjectWithIdAlreadyExists",
                         op.getObjectAsPrintable(), op.getInternalObjectId()));
                 }
                 catch (NucleusObjectNotFoundException onfe)
@@ -138,8 +133,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                 sheet = wb.createSheet(sheetName);
                 if (NucleusLogger.DATASTORE_PERSIST.isDebugEnabled())
                 {
-                    NucleusLogger.DATASTORE_PERSIST.debug(LOCALISER_EXCEL.msg("Excel.Insert.SheetCreated",
-                        op.getObjectAsPrintable(), sheetName));
+                    NucleusLogger.DATASTORE_PERSIST.debug(Localiser.msg("Excel.Insert.SheetCreated", op.getObjectAsPrintable(), sheetName));
                 }
             }
             else
@@ -160,8 +154,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
 
             if (NucleusLogger.DATASTORE_PERSIST.isDebugEnabled())
             {
-                NucleusLogger.DATASTORE_PERSIST.debug(LOCALISER_EXCEL.msg("Excel.ExecutionTime", 
-                    (System.currentTimeMillis() - startTime)));
+                NucleusLogger.DATASTORE_PERSIST.debug(Localiser.msg("Excel.ExecutionTime", (System.currentTimeMillis() - startTime)));
             }
             if (ec.getStatistics() != null)
             {
@@ -206,7 +199,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                 {
                     if (NucleusLogger.DATASTORE.isDebugEnabled())
                     {
-                        NucleusLogger.DATASTORE.debug(LOCALISER_EXCEL.msg("Excel.Insert.ObjectPersistedWithVersion",
+                        NucleusLogger.DATASTORE.debug(Localiser.msg("Excel.Insert.ObjectPersistedWithVersion",
                             op.getObjectAsPrintable(), op.getInternalObjectId(), "" + nextVersion));
                     }
                     verCell.setCellValue((Long)nextVersion);
@@ -215,7 +208,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                 {
                     if (NucleusLogger.DATASTORE.isDebugEnabled())
                     {
-                        NucleusLogger.DATASTORE.debug(LOCALISER_EXCEL.msg("Excel.Insert.ObjectPersistedWithVersion",
+                        NucleusLogger.DATASTORE.debug(Localiser.msg("Excel.Insert.ObjectPersistedWithVersion",
                             op.getObjectAsPrintable(), op.getInternalObjectId(), "" + nextVersion));
                     }
                     Date date = new Date();
@@ -227,7 +220,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
             {
                 if (NucleusLogger.DATASTORE.isDebugEnabled())
                 {
-                    NucleusLogger.DATASTORE.debug(LOCALISER_EXCEL.msg("Excel.Insert.ObjectPersisted",
+                    NucleusLogger.DATASTORE.debug(Localiser.msg("Excel.Insert.ObjectPersisted",
                         op.getObjectAsPrintable(), op.getInternalObjectId()));
                 }
             }
@@ -323,7 +316,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                     }
                     fieldStr.append(cmd.getMetaDataForManagedMemberAtAbsolutePosition(fieldNumbers[i]).getName());
                 }
-                NucleusLogger.DATASTORE_PERSIST.debug(LOCALISER_EXCEL.msg("Excel.Update.Start", 
+                NucleusLogger.DATASTORE_PERSIST.debug(Localiser.msg("Excel.Update.Start", 
                     op.getObjectAsPrintable(), op.getInternalObjectId(), fieldStr.toString()));
             }
 
@@ -331,7 +324,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
             final Row row = sheet.getRow(ExcelUtils.getRowNumberForObjectInWorkbook(op, wb, true, table));
             if (row == null)
             {
-                throw new NucleusDataStoreException(LOCALISER_EXCEL.msg("Excel.RowNotFoundForSheetForWorkbook",
+                throw new NucleusDataStoreException(Localiser.msg("Excel.RowNotFoundForSheetForWorkbook",
                     table.getIdentifier(), StringUtils.toJVMIDString(op.getInternalObjectId())));
             }
             op.provideFields(updatedFieldNums, new StoreFieldManager(op, row, false, table));
@@ -342,7 +335,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                 op.setTransactionalVersion(nextVersion);
                 if (NucleusLogger.DATASTORE.isDebugEnabled())
                 {
-                    NucleusLogger.DATASTORE.debug(LOCALISER_EXCEL.msg("Excel.Insert.ObjectPersistedWithVersion",
+                    NucleusLogger.DATASTORE.debug(Localiser.msg("Excel.Insert.ObjectPersistedWithVersion",
                         op.getObjectAsPrintable(), op.getInternalObjectId(), "" + nextVersion));
                 }
 
@@ -361,8 +354,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
 
             if (NucleusLogger.DATASTORE_PERSIST.isDebugEnabled())
             {
-                NucleusLogger.DATASTORE_PERSIST.debug(LOCALISER_EXCEL.msg("Excel.ExecutionTime", 
-                    (System.currentTimeMillis() - startTime)));
+                NucleusLogger.DATASTORE_PERSIST.debug(Localiser.msg("Excel.ExecutionTime", (System.currentTimeMillis() - startTime)));
             }
             if (ec.getStatistics() != null)
             {
@@ -409,8 +401,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
             long startTime = System.currentTimeMillis();
             if (NucleusLogger.DATASTORE_PERSIST.isDebugEnabled())
             {
-                NucleusLogger.DATASTORE_PERSIST.debug(LOCALISER_EXCEL.msg("Excel.Delete.Start", 
-                    op.getObjectAsPrintable(), op.getInternalObjectId()));
+                NucleusLogger.DATASTORE_PERSIST.debug(Localiser.msg("Excel.Delete.Start", op.getObjectAsPrintable(), op.getInternalObjectId()));
             }
 
             int rowId = ExcelUtils.getRowNumberForObjectInWorkbook(op, wb, false, table);
@@ -444,8 +435,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
 
             if (NucleusLogger.DATASTORE_PERSIST.isDebugEnabled())
             {
-                NucleusLogger.DATASTORE_PERSIST.debug(LOCALISER_EXCEL.msg("Excel.ExecutionTime", 
-                    (System.currentTimeMillis() - startTime)));
+                NucleusLogger.DATASTORE_PERSIST.debug(Localiser.msg("Excel.ExecutionTime", (System.currentTimeMillis() - startTime)));
             }
             if (ec.getStatistics() != null)
             {
@@ -497,8 +487,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
             long startTime = System.currentTimeMillis();
             if (NucleusLogger.DATASTORE_RETRIEVE.isDebugEnabled())
             {
-                NucleusLogger.DATASTORE_RETRIEVE.debug(LOCALISER_EXCEL.msg("Excel.Fetch.Start", 
-                    op.getObjectAsPrintable(), op.getInternalObjectId()));
+                NucleusLogger.DATASTORE_RETRIEVE.debug(Localiser.msg("Excel.Fetch.Start", op.getObjectAsPrintable(), op.getInternalObjectId()));
             }
 
             int rowNumber = ExcelUtils.getRowNumberForObjectInWorkbook(op, wb, false, table);
@@ -510,7 +499,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
 
             if (NucleusLogger.DATASTORE_RETRIEVE.isDebugEnabled())
             {
-                NucleusLogger.DATASTORE_RETRIEVE.debug(LOCALISER_EXCEL.msg("Excel.ExecutionTime", (System.currentTimeMillis() - startTime)));
+                NucleusLogger.DATASTORE_RETRIEVE.debug(Localiser.msg("Excel.ExecutionTime", (System.currentTimeMillis() - startTime)));
             }
             if (ec.getStatistics() != null)
             {
