@@ -53,7 +53,7 @@ public class ExcelUtils
      */
     public static Sheet getSheetForClass(ObjectProvider op, Workbook wb, Table table)
     {
-        String sheetName = table.getIdentifier();
+        String sheetName = table.getName();
         final Sheet sheet = wb.getSheet(sheetName);
         if (sheet == null)
         {
@@ -353,7 +353,7 @@ public class ExcelUtils
 
         final AbstractClassMetaData cmd = op.getClassMetaData();
         Table table = op.getExecutionContext().getStoreManager().getStoreDataForClass(op.getClassMetaData().getFullClassName()).getTable();
-        String sheetName = table.getIdentifier();
+        String sheetName = table.getName();
         final Sheet sheet = wb.getSheet(sheetName);
         if (cmd.getIdentityType() == IdentityType.APPLICATION)
         {

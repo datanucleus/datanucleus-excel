@@ -83,7 +83,7 @@ public class ExcelCandidateList extends AbstractCandidateLazyLoadList
                 storeMgr.manageClasses(new String[] {cmd.getFullClassName()}, ec.getClassLoaderResolver(), workbook);
             }
             Table table = ec.getStoreManager().getStoreDataForClass(cmd.getFullClassName()).getTable();
-            String sheetName = table.getIdentifier();
+            String sheetName = table.getName();
             Sheet sheet = workbook.getSheet(sheetName);
             int size = 0;
             if (sheet != null && sheet.getPhysicalNumberOfRows() > 0)

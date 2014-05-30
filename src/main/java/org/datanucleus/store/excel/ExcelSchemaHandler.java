@@ -67,7 +67,7 @@ public class ExcelSchemaHandler extends AbstractStoreSchemaHandler
                 if (cmd != null)
                 {
                     Table table = storeMgr.getStoreDataForClass(cmd.getFullClassName()).getTable();
-                    String sheetName = table.getIdentifier();
+                    String sheetName = table.getName();
                     Sheet sheet = wb.getSheet(sheetName);
                     if (sheet == null)
                     {
@@ -122,7 +122,7 @@ public class ExcelSchemaHandler extends AbstractStoreSchemaHandler
                 if (cmd != null)
                 {
                     Table table = storeMgr.getStoreDataForClass(cmd.getFullClassName()).getTable();
-                    String sheetName = table.getIdentifier();
+                    String sheetName = table.getName();
                     Sheet sheet = wb.getSheet(sheetName);
                     if (sheet != null)
                     {

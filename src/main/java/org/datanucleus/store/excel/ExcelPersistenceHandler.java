@@ -124,7 +124,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
             }
 
             int[] fieldNumbers = cmd.getAllMemberPositions();
-            String sheetName = table.getIdentifier();
+            String sheetName = table.getName();
             Sheet sheet = wb.getSheet(sheetName);
             int rowNum = 0;
             if (sheet == null)
@@ -325,7 +325,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
             if (row == null)
             {
                 throw new NucleusDataStoreException(Localiser.msg("Excel.RowNotFoundForSheetForWorkbook",
-                    table.getIdentifier(), StringUtils.toJVMIDString(op.getInternalObjectId())));
+                    table.getName(), StringUtils.toJVMIDString(op.getInternalObjectId())));
             }
             op.provideFields(updatedFieldNums, new StoreFieldManager(op, row, false, table));
 
