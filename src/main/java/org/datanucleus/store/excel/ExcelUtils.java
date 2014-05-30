@@ -352,7 +352,7 @@ public class ExcelUtils
         int numRows = 0;
 
         final AbstractClassMetaData cmd = op.getClassMetaData();
-        Table table = (Table) op.getExecutionContext().getStoreManager().getStoreDataForClass(op.getClassMetaData().getFullClassName()).getProperty("tableObject");
+        Table table = op.getExecutionContext().getStoreManager().getStoreDataForClass(op.getClassMetaData().getFullClassName()).getTable();
         String sheetName = table.getIdentifier();
         final Sheet sheet = wb.getSheet(sheetName);
         if (cmd.getIdentityType() == IdentityType.APPLICATION)

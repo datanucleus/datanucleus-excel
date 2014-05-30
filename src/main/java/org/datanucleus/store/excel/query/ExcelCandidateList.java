@@ -82,7 +82,7 @@ public class ExcelCandidateList extends AbstractCandidateLazyLoadList
                 // Make sure schema exists, using this connection
                 storeMgr.manageClasses(new String[] {cmd.getFullClassName()}, ec.getClassLoaderResolver(), workbook);
             }
-            Table table = (Table) ec.getStoreManager().getStoreDataForClass(cmd.getFullClassName()).getProperty("tableObject");
+            Table table = ec.getStoreManager().getStoreDataForClass(cmd.getFullClassName()).getTable();
             String sheetName = table.getIdentifier();
             Sheet sheet = workbook.getSheet(sheetName);
             int size = 0;
@@ -158,7 +158,7 @@ public class ExcelCandidateList extends AbstractCandidateLazyLoadList
             {
                 // Object is of this candidate type, so find the object
                 String sheetName = ec.getStoreManager().getNamingFactory().getTableName(cmd);
-                Table table = (Table) ec.getStoreManager().getStoreDataForClass(cmd.getFullClassName()).getProperty("tableObject");
+                Table table = ec.getStoreManager().getStoreDataForClass(cmd.getFullClassName()).getTable();
                 Workbook workbook = (Workbook) mconn.getConnection();
                 final Sheet worksheet = workbook.getSheet(sheetName);
                 if (worksheet != null)

@@ -106,7 +106,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                 // Make sure schema exists, using this connection
                 ((ExcelStoreManager)storeMgr).manageClasses(new String[] {cmd.getFullClassName()}, ec.getClassLoaderResolver(), wb);
             }
-            Table table = (Table) ec.getStoreManager().getStoreDataForClass(cmd.getFullClassName()).getProperty("tableObject");
+            Table table = ec.getStoreManager().getStoreDataForClass(cmd.getFullClassName()).getTable();
 
             if (cmd.getIdentityType() == IdentityType.APPLICATION || cmd.getIdentityType() == IdentityType.DATASTORE)
             {
@@ -252,7 +252,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                 // Make sure schema exists, using this connection
                 ((ExcelStoreManager)storeMgr).manageClasses(new String[] {cmd.getFullClassName()}, ec.getClassLoaderResolver(), wb);
             }
-            Table table = (Table) ec.getStoreManager().getStoreDataForClass(cmd.getFullClassName()).getProperty("tableObject");
+            Table table = ec.getStoreManager().getStoreDataForClass(cmd.getFullClassName()).getTable();
 
             final Sheet sheet = ExcelUtils.getSheetForClass(op, wb, table);
 
@@ -390,7 +390,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
             }
 
             Workbook wb = (Workbook) mconn.getConnection();
-            Table table = (Table) ec.getStoreManager().getStoreDataForClass(op.getClassMetaData().getFullClassName()).getProperty("tableObject");
+            Table table = ec.getStoreManager().getStoreDataForClass(op.getClassMetaData().getFullClassName()).getTable();
             final Sheet sheet = ExcelUtils.getSheetForClass(op, wb, table);
 
             // Invoke any cascade deletion
@@ -481,7 +481,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
         try
         {
             Workbook wb = (Workbook) mconn.getConnection();
-            Table table = (Table) ec.getStoreManager().getStoreDataForClass(cmd.getFullClassName()).getProperty("tableObject");
+            Table table = ec.getStoreManager().getStoreDataForClass(cmd.getFullClassName()).getTable();
             final Sheet sheet = ExcelUtils.getSheetForClass(op, wb, table);
 
             long startTime = System.currentTimeMillis();
@@ -571,7 +571,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                 // Make sure schema exists, using this connection
                 ((ExcelStoreManager)storeMgr).manageClasses(new String[] {cmd.getFullClassName()}, ec.getClassLoaderResolver(), wb);
             }
-            Table table = (Table) ec.getStoreManager().getStoreDataForClass(op.getClassMetaData().getFullClassName()).getProperty("tableObject");
+            Table table = ec.getStoreManager().getStoreDataForClass(op.getClassMetaData().getFullClassName()).getTable();
             int rownum = ExcelUtils.getRowNumberForObjectInWorkbook(op, wb, false, table);
             if (ec.getStatistics() != null)
             {

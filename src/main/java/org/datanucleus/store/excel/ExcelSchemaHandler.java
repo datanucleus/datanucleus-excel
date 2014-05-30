@@ -66,7 +66,7 @@ public class ExcelSchemaHandler extends AbstractStoreSchemaHandler
                 AbstractClassMetaData cmd = storeMgr.getMetaDataManager().getMetaDataForClass(className, clr);
                 if (cmd != null)
                 {
-                    Table table = (Table) storeMgr.getStoreDataForClass(cmd.getFullClassName()).getProperty("tableObject");
+                    Table table = storeMgr.getStoreDataForClass(cmd.getFullClassName()).getTable();
                     String sheetName = table.getIdentifier();
                     Sheet sheet = wb.getSheet(sheetName);
                     if (sheet == null)
@@ -121,7 +121,7 @@ public class ExcelSchemaHandler extends AbstractStoreSchemaHandler
                 AbstractClassMetaData cmd = storeMgr.getMetaDataManager().getMetaDataForClass(className, clr);
                 if (cmd != null)
                 {
-                    Table table = (Table) storeMgr.getStoreDataForClass(cmd.getFullClassName()).getProperty("tableObject");
+                    Table table = storeMgr.getStoreDataForClass(cmd.getFullClassName()).getTable();
                     String sheetName = table.getIdentifier();
                     Sheet sheet = wb.getSheet(sheetName);
                     if (sheet != null)
