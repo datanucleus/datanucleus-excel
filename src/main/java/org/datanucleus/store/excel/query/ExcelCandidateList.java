@@ -157,8 +157,8 @@ public class ExcelCandidateList extends AbstractCandidateLazyLoadList
             if (index >= first && index < last)
             {
                 // Object is of this candidate type, so find the object
-                String sheetName = ec.getStoreManager().getNamingFactory().getTableName(cmd);
                 Table table = ec.getStoreManager().getStoreDataForClass(cmd.getFullClassName()).getTable();
+                String sheetName = table.getName();
                 Workbook workbook = (Workbook) mconn.getConnection();
                 final Sheet worksheet = workbook.getSheet(sheetName);
                 if (worksheet != null)
