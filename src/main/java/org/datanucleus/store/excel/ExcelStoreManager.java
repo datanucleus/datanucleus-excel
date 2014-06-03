@@ -109,6 +109,7 @@ public abstract class ExcelStoreManager extends AbstractStoreManager implements 
         String[] filteredClassNames = getNucleusContext().getTypeManager().filterOutSupportedSecondClassNames(classNames);
 
         // Find the ClassMetaData for these classes and all referenced by these classes
+        Set<String> clsNameSet = new HashSet<String>();
         Iterator iter = getMetaDataManager().getReferencedClasses(filteredClassNames, clr).iterator();
         while (iter.hasNext())
         {
@@ -131,13 +132,13 @@ public abstract class ExcelStoreManager extends AbstractStoreManager implements 
                         registerStoreData(sd);
                     }
 
-                    // Create schema for class
-                    Set<String> clsNameSet = new HashSet<String>();
                     clsNameSet.add(cmd.getFullClassName());
-                    schemaHandler.createSchemaForClasses(clsNameSet, null, wb);
                 }
             }
         }
+
+        // Create schema for classes
+        schemaHandler.createSchemaForClasses(clsNameSet, null, wb);
     }
 
     public void createSchema(String schemaName, Properties props)
