@@ -118,7 +118,7 @@ public class ExcelUtils
                 }
             }
 
-            String sheetName = op.getExecutionContext().getStoreManager().getNamingFactory().getTableName(cmd);
+            String sheetName = table.getName();
             final Sheet sheet = wb.getSheet(sheetName);
             if (sheet != null && sheet.getPhysicalNumberOfRows() > 0)
             {
@@ -152,7 +152,7 @@ public class ExcelUtils
         }
         else if (cmd.getIdentityType() == IdentityType.DATASTORE)
         {
-            String sheetName = op.getExecutionContext().getStoreManager().getNamingFactory().getTableName(cmd);
+            String sheetName = table.getName();
             final Sheet sheet = wb.getSheet(sheetName);
             int datastoreIdColNo = table.getDatastoreIdColumn().getPosition();
             Object key = IdentityUtils.getTargetKeyForDatastoreIdentity(op.getInternalObjectId());
@@ -235,7 +235,7 @@ public class ExcelUtils
                 }
             }
 
-            String sheetName = op.getExecutionContext().getStoreManager().getNamingFactory().getTableName(cmd);
+            String sheetName = table.getName();
             final Sheet sheet = wb.getSheet(sheetName);
             if (sheet != null && sheet.getPhysicalNumberOfRows() > 0)
             {
