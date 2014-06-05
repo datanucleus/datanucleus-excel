@@ -407,7 +407,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
 
             if (mmd.hasCollection())
             {
-                StringBuffer cellValue = new StringBuffer("[");
+                StringBuilder cellValue = new StringBuilder("[");
                 Collection coll = (Collection)value;
                 Iterator collIter = coll.iterator();
                 while (collIter.hasNext())
@@ -430,7 +430,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                 AbstractClassMetaData keyCmd = mmd.getMap().getKeyClassMetaData(clr, ec.getMetaDataManager());
                 AbstractClassMetaData valCmd = mmd.getMap().getValueClassMetaData(clr, ec.getMetaDataManager());
 
-                StringBuffer cellValue = new StringBuffer("[");
+                StringBuilder cellValue = new StringBuilder("[");
                 Map map = (Map)value;
                 Iterator<Map.Entry> mapIter = map.entrySet().iterator();
                 while (mapIter.hasNext())
@@ -470,7 +470,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
             }
             else if (mmd.hasArray())
             {
-                StringBuffer cellValue = new StringBuffer("[");
+                StringBuilder cellValue = new StringBuilder("[");
                 for (int i=0;i<Array.getLength(value);i++)
                 {
                     Object element = Array.get(value, i);
