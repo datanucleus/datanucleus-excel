@@ -43,6 +43,8 @@ import org.datanucleus.util.Localiser;
  */
 public class ExcelUtils
 {
+    private ExcelUtils() {}
+
     /**
      * Convenience method to return the worksheet used for storing the specified object.
      * @param op ObjectProvider for the object
@@ -164,12 +166,9 @@ public class ExcelUtils
                     if (row != null)
                     {
                         Cell cell = row.getCell(datastoreIdColNo);
-                        if (cell != null)
+                        if (cell != null && cellMatches(cell, key.getClass(), key))
                         {
-                            if (cellMatches(cell, key.getClass(), key))
-                            {
-                                return row.getRowNum();
-                            }
+                            return row.getRowNum();
                         }
                     }
                 }
