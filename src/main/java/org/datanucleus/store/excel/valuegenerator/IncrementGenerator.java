@@ -145,13 +145,16 @@ public class IncrementGenerator extends AbstractDatastoreGenerator<Long>
             }
 
             // Update the row
-            NucleusLogger.VALUEGENERATION.debug("Allowing " + size + " values for increment generator for "+key);
-            long currentVal = (long)valueCell.getNumericCellValue();
-            valueCell.setCellValue(Double.valueOf(currentVal+size));
-            for (int i=0;i<size;i++)
+            if (valueCell != null)
             {
-                oids.add(currentVal+1);
-                currentVal++;
+                NucleusLogger.VALUEGENERATION.debug("Allowing " + size + " values for increment generator for "+key);
+                long currentVal = (long)valueCell.getNumericCellValue();
+                valueCell.setCellValue(Double.valueOf(currentVal+size));
+                for (int i=0;i<size;i++)
+                {
+                    oids.add(currentVal+1);
+                    currentVal++;
+                }
             }
         }
         finally
