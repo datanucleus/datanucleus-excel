@@ -175,7 +175,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
             return;
         }
         Cell cell = row.getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition(), Row.CREATE_NULL_AS_BLANK);
-        cell.setCellValue((double)value);
+        cell.setCellValue(value);
     }
 
     public void storeShortField(int fieldNumber, short value)
@@ -334,50 +334,48 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                 }
                 return;
             }
-            else
+
+            Cell cell = row.getCell(mapping.getColumn(0).getPosition(), Row.CREATE_NULL_AS_BLANK);
+            if (value == null)
             {
-                Cell cell = row.getCell(mapping.getColumn(0).getPosition(), Row.CREATE_NULL_AS_BLANK);
-                if (value == null)
-                {
-                    row.removeCell(cell);
-                    return;
-                }
-
-                boolean cellSet = setValueInCellForType(value, mmd.getType(), cell, mapping.getColumn(0).getJdbcType());
-                if (!cellSet)
-                {
-                    // Try to persist using converters
-                    TypeManager typeMgr = ec.getNucleusContext().getTypeManager();
-                    boolean useLong = MetaDataUtils.isJdbcTypeNumeric(mapping.getColumn(0).getJdbcType());
-
-                    TypeConverter longConv = typeMgr.getTypeConverterForType(mmd.getType(), Long.class);
-                    if (useLong)
-                    {
-                        if (longConv != null)
-                        {
-                            cell.setCellValue((Long)longConv.toDatastoreType(value));
-                            return;
-                        }
-                    }
-                    else
-                    {
-                        TypeConverter strConv = typeMgr.getTypeConverterForType(mmd.getType(), String.class);
-                        if (strConv != null)
-                        {
-                            CreationHelper createHelper = row.getSheet().getWorkbook().getCreationHelper();
-                            cell.setCellValue(createHelper.createRichTextString((String) strConv.toDatastoreType(value)));
-                            return;
-                        }
-                        else if (longConv != null)
-                        {
-                            cell.setCellValue((Long)longConv.toDatastoreType(value));
-                            return;
-                        }
-                    }
-                }
-                NucleusLogger.PERSISTENCE.warn("DataNucleus doesnt currently support persistence of field " + mmd.getFullFieldName() + 
-                    " type=" + value.getClass().getName() + " - ignoring");
+                row.removeCell(cell);
+                return;
             }
+
+            boolean cellSet = setValueInCellForType(value, mmd.getType(), cell, mapping.getColumn(0).getJdbcType());
+            if (!cellSet)
+            {
+                // Try to persist using converters
+                TypeManager typeMgr = ec.getNucleusContext().getTypeManager();
+                boolean useLong = MetaDataUtils.isJdbcTypeNumeric(mapping.getColumn(0).getJdbcType());
+
+                TypeConverter longConv = typeMgr.getTypeConverterForType(mmd.getType(), Long.class);
+                if (useLong)
+                {
+                    if (longConv != null)
+                    {
+                        cell.setCellValue((Long)longConv.toDatastoreType(value));
+                        return;
+                    }
+                }
+                else
+                {
+                    TypeConverter strConv = typeMgr.getTypeConverterForType(mmd.getType(), String.class);
+                    if (strConv != null)
+                    {
+                        CreationHelper createHelper = row.getSheet().getWorkbook().getCreationHelper();
+                        cell.setCellValue(createHelper.createRichTextString((String) strConv.toDatastoreType(value)));
+                        return;
+                    }
+                    else if (longConv != null)
+                    {
+                        cell.setCellValue((Long)longConv.toDatastoreType(value));
+                        return;
+                    }
+                }
+            }
+            NucleusLogger.PERSISTENCE.warn("DataNucleus doesnt currently support persistence of field " + mmd.getFullFieldName() + 
+                " type=" + value.getClass().getName() + " - ignoring");
         }
         else if (RelationType.isRelationSingleValued(relationType))
         {

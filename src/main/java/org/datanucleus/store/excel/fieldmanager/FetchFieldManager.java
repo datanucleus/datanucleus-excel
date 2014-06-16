@@ -252,132 +252,128 @@ public class FetchFieldManager extends AbstractFetchFieldManager
                     }
                     return value;
                 }
+
+                // Member stored in multiple columns and convertable using TypeConverter
+                boolean isNull = true;
+                Object valuesArr = null;
+                Class[] colTypes = ((MultiColumnConverter)conv).getDatastoreColumnTypes();
+                if (colTypes[0] == int.class)
+                {
+                    valuesArr = new int[mapping.getNumberOfColumns()];
+                }
+                else if (colTypes[0] == long.class)
+                {
+                    valuesArr = new long[mapping.getNumberOfColumns()];
+                }
+                else if (colTypes[0] == double.class)
+                {
+                    valuesArr = new double[mapping.getNumberOfColumns()];
+                }
+                else if (colTypes[0] == float.class)
+                {
+                    valuesArr = new double[mapping.getNumberOfColumns()];
+                }
+                else if (colTypes[0] == String.class)
+                {
+                    valuesArr = new String[mapping.getNumberOfColumns()];
+                }
+                // TODO Support other types
                 else
                 {
-                    // Member stored in multiple columns and convertable using TypeConverter
-                    boolean isNull = true;
-                    Object valuesArr = null;
-                    Class[] colTypes = ((MultiColumnConverter)conv).getDatastoreColumnTypes();
-                    if (colTypes[0] == int.class)
+                    valuesArr = new Object[mapping.getNumberOfColumns()];
+                }
+
+                for (int i=0;i<mapping.getNumberOfColumns();i++)
+                {
+                    Cell cell = sheet.getRow(rowNumber).getCell(mapping.getColumn(i).getPosition());
+                    if (cell == null)
                     {
-                        valuesArr = new int[mapping.getNumberOfColumns()];
+                        Array.set(valuesArr, i, null);
                     }
-                    else if (colTypes[0] == long.class)
-                    {
-                        valuesArr = new long[mapping.getNumberOfColumns()];
-                    }
-                    else if (colTypes[0] == double.class)
-                    {
-                        valuesArr = new double[mapping.getNumberOfColumns()];
-                    }
-                    else if (colTypes[0] == float.class)
-                    {
-                        valuesArr = new double[mapping.getNumberOfColumns()];
-                    }
-                    else if (colTypes[0] == String.class)
-                    {
-                        valuesArr = new String[mapping.getNumberOfColumns()];
-                    }
-                    // TODO Support other types
                     else
                     {
-                        valuesArr = new Object[mapping.getNumberOfColumns()];
-                    }
-
-                    for (int i=0;i<mapping.getNumberOfColumns();i++)
-                    {
-                        Cell cell = sheet.getRow(rowNumber).getCell(mapping.getColumn(i).getPosition());
-                        if (cell == null)
+                        isNull = false;
+                        if (colTypes[i] == int.class)
                         {
-                            Array.set(valuesArr, i, null);
+                            Object cellValue = getValueFromCellOfType(cell, Integer.class, mapping.getColumn(i).getJdbcType());
+                            Array.set(valuesArr, i, ((Integer)cellValue).intValue());
+                        }
+                        else if (colTypes[i] == long.class)
+                        {
+                            Object cellValue = getValueFromCellOfType(cell, Long.class, mapping.getColumn(i).getJdbcType());
+                            Array.set(valuesArr, i, ((Long)cellValue).longValue());
                         }
                         else
                         {
-                            isNull = false;
-                            if (colTypes[i] == int.class)
-                            {
-                                Object cellValue = getValueFromCellOfType(cell, Integer.class, mapping.getColumn(i).getJdbcType());
-                                Array.set(valuesArr, i, ((Integer)cellValue).intValue());
-                            }
-                            else if (colTypes[i] == long.class)
-                            {
-                                Object cellValue = getValueFromCellOfType(cell, Long.class, mapping.getColumn(i).getJdbcType());
-                                Array.set(valuesArr, i, ((Long)cellValue).longValue());
-                            }
-                            else
-                            {
-                                Object cellValue = getValueFromCellOfType(cell, colTypes[i], mapping.getColumn(i).getJdbcType());
-                                Array.set(valuesArr, i, cellValue);
-                            }
+                            Object cellValue = getValueFromCellOfType(cell, colTypes[i], mapping.getColumn(i).getJdbcType());
+                            Array.set(valuesArr, i, cellValue);
                         }
                     }
-
-                    if (isNull)
-                    {
-                        return null;
-                    }
-
-                    Object memberValue = conv.toMemberType(valuesArr);
-                    if (op != null && memberValue != null)
-                    {
-                        memberValue = op.wrapSCOField(fieldNumber, memberValue, false, false, true);
-                    }
-                    return memberValue;
                 }
-            }
-            else
-            {
-                Cell cell = sheet.getRow(rowNumber).getCell(mapping.getColumn(0).getPosition());
-                if (cell == null)
+
+                if (isNull)
                 {
                     return null;
                 }
 
-                Object value = getValueFromCellOfType(cell, mmd.getType(), col.getJdbcType());
-                if (value != null && op != null)
+                Object memberValue = conv.toMemberType(valuesArr);
+                if (op != null && memberValue != null)
                 {
-                    return op.wrapSCOField(fieldNumber, value, false, false, true);
+                    memberValue = op.wrapSCOField(fieldNumber, memberValue, false, false, true);
                 }
+                return memberValue;
+            }
 
-                // Fallback to String/Long TypeConverters
-                boolean useLong = MetaDataUtils.isJdbcTypeNumeric(col.getJdbcType());
-                TypeConverter strConv = ec.getNucleusContext().getTypeManager().getTypeConverterForType(mmd.getType(), String.class);
-                TypeConverter longConv = ec.getNucleusContext().getTypeManager().getTypeConverterForType(mmd.getType(), Long.class);
-                if (useLong && longConv != null)
+            Cell cell = sheet.getRow(rowNumber).getCell(mapping.getColumn(0).getPosition());
+            if (cell == null)
+            {
+                return null;
+            }
+
+            Object value = getValueFromCellOfType(cell, mmd.getType(), col.getJdbcType());
+            if (value != null && op != null)
+            {
+                return op.wrapSCOField(fieldNumber, value, false, false, true);
+            }
+
+            // Fallback to String/Long TypeConverters
+            boolean useLong = MetaDataUtils.isJdbcTypeNumeric(col.getJdbcType());
+            TypeConverter strConv = ec.getNucleusContext().getTypeManager().getTypeConverterForType(mmd.getType(), String.class);
+            TypeConverter longConv = ec.getNucleusContext().getTypeManager().getTypeConverterForType(mmd.getType(), Long.class);
+            if (useLong && longConv != null)
+            {
+                value = longConv.toMemberType((long)cell.getNumericCellValue());
+            }
+            else if (!useLong && strConv != null)
+            {
+                String cellValue = (cell.getRichStringCellValue() != null ? cell.getRichStringCellValue().getString() : null);
+                if (cellValue != null && cellValue.length() > 0)
                 {
-                    value = longConv.toMemberType((long)cell.getNumericCellValue());
-                }
-                else if (!useLong && strConv != null)
-                {
-                    String cellValue = (cell.getRichStringCellValue() != null ? cell.getRichStringCellValue().getString() : null);
-                    if (cellValue != null && cellValue.length() > 0)
-                    {
-                        value = strConv.toMemberType(cell.getRichStringCellValue().getString());
-                    }
-                    else
-                    {
-                        return null;
-                    }
-                }
-                else if (!useLong && longConv != null)
-                {
-                    value = longConv.toMemberType((long)cell.getNumericCellValue());
+                    value = strConv.toMemberType(cell.getRichStringCellValue().getString());
                 }
                 else
                 {
-                    // Not supported as String so just set to null
-                    NucleusLogger.PERSISTENCE.warn("Field " + mmd.getFullFieldName() + 
-                            " could not be set in the object since it is not persistable to Excel");
                     return null;
                 }
-
-                // Wrap the field if it is SCO
-                if (op != null)
-                {
-                    return op.wrapSCOField(fieldNumber, value, false, false, true);
-                }
-                return value;
             }
+            else if (!useLong && longConv != null)
+            {
+                value = longConv.toMemberType((long)cell.getNumericCellValue());
+            }
+            else
+            {
+                // Not supported as String so just set to null
+                NucleusLogger.PERSISTENCE.warn("Field " + mmd.getFullFieldName() + 
+                        " could not be set in the object since it is not persistable to Excel");
+                return null;
+            }
+
+            // Wrap the field if it is SCO
+            if (op != null)
+            {
+                return op.wrapSCOField(fieldNumber, value, false, false, true);
+            }
+            return value;
         }
         else if (RelationType.isRelationSingleValued(relationType))
         {
@@ -411,10 +407,8 @@ public class FetchFieldManager extends AbstractFetchFieldManager
                 }
                 return obj;
             }
-            else
-            {
-                return null;
-            }
+
+            return null;
         }
         else if (RelationType.isRelationMultiValued(relationType))
         {
@@ -710,18 +704,14 @@ public class FetchFieldManager extends AbstractFetchFieldManager
                 double value = cell.getNumericCellValue();
                 return requiredType.getEnumConstants()[(int)value];
             }
-            else
+
+            String value = cell.getRichStringCellValue().getString();
+            if (value != null && value.length() > 0)
             {
-                String value = cell.getRichStringCellValue().getString();
-                if (value != null && value.length() > 0)
-                {
-                    return Enum.valueOf(requiredType, value);
-                }
-                else
-                {
-                    return null;
-                }
+                return Enum.valueOf(requiredType, value);
             }
+
+            return null;
         }
         else if (requiredType == byte[].class)
         {

@@ -310,7 +310,7 @@ public class ExcelUtils
             return true;
         }
         else if ((fieldType == double.class || fieldType == Double.class) && 
-                ((Double)fieldValue).doubleValue() == (double)cell.getNumericCellValue())
+                ((Double)fieldValue).doubleValue() == cell.getNumericCellValue())
         {
             return true;
         }

@@ -87,13 +87,6 @@ public class ConnectionFactoryImpl extends AbstractConnectionFactory
      */
     public ManagedConnection createManagedConnection(ExecutionContext ec, Map options)
     {
-        if (ooxml)
-        {
-            return new OOXMLManagedConnection(filename);
-        }
-        else
-        {
-            return new XLSManagedConnection(filename);
-        }
+        return ooxml ? new OOXMLManagedConnection(filename) : new XLSManagedConnection(filename);
     }
 }

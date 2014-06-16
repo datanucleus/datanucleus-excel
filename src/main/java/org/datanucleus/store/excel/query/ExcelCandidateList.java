@@ -267,10 +267,8 @@ public class ExcelCandidateList extends AbstractCandidateLazyLoadList
                                     }, null, ignoreCache, false);
                                 }
                             }
-                            else
-                            {
-                                current++;
-                            }
+
+                            current++;
                         }
                     }
                 }

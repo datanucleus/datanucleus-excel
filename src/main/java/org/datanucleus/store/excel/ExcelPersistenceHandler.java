@@ -409,27 +409,25 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
             {
                 throw new NucleusObjectNotFoundException("object not found", op.getObject());
             }
+
+            if (storeMgr instanceof XLSStoreManager && sheet.getLastRowNum() == rowId)
+            {
+                // Deleting top row which is last row so just remove all cells and leave row
+                // otherwise Apache POI throws an ArrayIndexOutOfBoundsException
+                Row row = sheet.getRow(rowId);
+                Iterator<Cell> it = row.cellIterator();
+                while (it.hasNext())
+                {
+                    row.removeCell(it.next());
+                }
+            }
             else
             {
-                if (storeMgr instanceof XLSStoreManager && sheet.getLastRowNum() == rowId)
+                // Deleting top row so remove it
+                sheet.removeRow(sheet.getRow(rowId));
+                if (sheet.getLastRowNum()>rowId)
                 {
-                    // Deleting top row which is last row so just remove all cells and leave row
-                    // otherwise Apache POI throws an ArrayIndexOutOfBoundsException
-                    Row row = sheet.getRow(rowId);
-                    Iterator<Cell> it = row.cellIterator();
-                    while (it.hasNext())
-                    {
-                        row.removeCell(it.next());
-                    }
-                }
-                else
-                {
-                    // Deleting top row so remove it
-                    sheet.removeRow(sheet.getRow(rowId));
-                    if (sheet.getLastRowNum()>rowId)
-                    {
-                        sheet.shiftRows(rowId+1, sheet.getLastRowNum(),-1);
-                    }
+                    sheet.shiftRows(rowId+1, sheet.getLastRowNum(),-1);
                 }
             }
 
