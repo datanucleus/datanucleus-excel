@@ -25,9 +25,11 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.datanucleus.ClassLoaderResolver;
 import org.datanucleus.metadata.AbstractClassMetaData;
+import org.datanucleus.store.StoreData;
 import org.datanucleus.store.StoreManager;
 import org.datanucleus.store.connection.ManagedConnection;
 import org.datanucleus.store.schema.AbstractStoreSchemaHandler;
+import org.datanucleus.store.schema.table.CompleteClassTable;
 import org.datanucleus.store.schema.table.Table;
 import org.datanucleus.util.Localiser;
 import org.datanucleus.util.NucleusLogger;
@@ -66,7 +68,17 @@ public class ExcelSchemaHandler extends AbstractStoreSchemaHandler
                 AbstractClassMetaData cmd = storeMgr.getMetaDataManager().getMetaDataForClass(className, clr);
                 if (cmd != null)
                 {
-                    Table table = storeMgr.getStoreDataForClass(cmd.getFullClassName()).getTable();
+                    StoreData storeData = storeMgr.getStoreDataForClass(cmd.getFullClassName());
+                    Table table = null;
+                    if (storeData != null)
+                    {
+                        table = storeData.getTable();
+                    }
+                    else
+                    {
+                        table = new CompleteClassTable(storeMgr, cmd, null);
+                    }
+
                     String sheetName = table.getName();
                     Sheet sheet = wb.getSheet(sheetName);
                     if (sheet == null)
@@ -121,7 +133,17 @@ public class ExcelSchemaHandler extends AbstractStoreSchemaHandler
                 AbstractClassMetaData cmd = storeMgr.getMetaDataManager().getMetaDataForClass(className, clr);
                 if (cmd != null)
                 {
-                    Table table = storeMgr.getStoreDataForClass(cmd.getFullClassName()).getTable();
+                    StoreData storeData = storeMgr.getStoreDataForClass(cmd.getFullClassName());
+                    Table table = null;
+                    if (storeData != null)
+                    {
+                        table = storeData.getTable();
+                    }
+                    else
+                    {
+                        table = new CompleteClassTable(storeMgr, cmd, null);
+                    }
+
                     String sheetName = table.getName();
                     Sheet sheet = wb.getSheet(sheetName);
                     if (sheet != null)
