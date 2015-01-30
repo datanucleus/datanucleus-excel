@@ -479,6 +479,10 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
         try
         {
             Workbook wb = (Workbook) mconn.getConnection();
+            if (!storeMgr.managesClass(cmd.getFullClassName()))
+            {
+                ((ExcelStoreManager)storeMgr).manageClasses(new String[] {cmd.getFullClassName()}, ec.getClassLoaderResolver(), wb);
+            }
             Table table = ec.getStoreManager().getStoreDataForClass(cmd.getFullClassName()).getTable();
             final Sheet sheet = ExcelUtils.getSheetForClass(op, wb, table);
 
