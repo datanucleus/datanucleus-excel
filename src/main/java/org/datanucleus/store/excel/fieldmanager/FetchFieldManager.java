@@ -331,42 +331,6 @@ public class FetchFieldManager extends AbstractFetchFieldManager
             }
 
             Object value = getValueFromCellOfType(cell, mmd.getType(), col.getJdbcType());
-            if (value != null && op != null)
-            {
-                return op.wrapSCOField(fieldNumber, value, false, false, true);
-            }
-
-            // Fallback to String/Long TypeConverters
-            boolean useLong = MetaDataUtils.isJdbcTypeNumeric(col.getJdbcType());
-            TypeConverter strConv = ec.getNucleusContext().getTypeManager().getTypeConverterForType(mmd.getType(), String.class);
-            TypeConverter longConv = ec.getNucleusContext().getTypeManager().getTypeConverterForType(mmd.getType(), Long.class);
-            if (useLong && longConv != null)
-            {
-                value = longConv.toMemberType((long)cell.getNumericCellValue());
-            }
-            else if (!useLong && strConv != null)
-            {
-                String cellValue = (cell.getRichStringCellValue() != null ? cell.getRichStringCellValue().getString() : null);
-                if (cellValue != null && cellValue.length() > 0)
-                {
-                    value = strConv.toMemberType(cell.getRichStringCellValue().getString());
-                }
-                else
-                {
-                    return null;
-                }
-            }
-            else if (!useLong && longConv != null)
-            {
-                value = longConv.toMemberType((long)cell.getNumericCellValue());
-            }
-            else
-            {
-                // Not supported as String so just set to null
-                NucleusLogger.PERSISTENCE.warn("Field " + mmd.getFullFieldName() + 
-                        " could not be set in the object since it is not persistable to Excel");
-                return null;
-            }
 
             // Wrap the field if it is SCO
             if (op != null)
@@ -721,6 +685,25 @@ public class FetchFieldManager extends AbstractFetchFieldManager
                 return Base64.decode(value);
             }
         }
+
+        // Fallback to String/Long TypeConverters
+        if (cell.getCellType() == Cell.CELL_TYPE_NUMERIC)
+        {
+            TypeConverter longConv = ec.getNucleusContext().getTypeManager().getTypeConverterForType(requiredType, Long.class);
+            return longConv.toMemberType((long)cell.getNumericCellValue());
+        }
+        else if (cell.getCellType() == Cell.CELL_TYPE_STRING)
+        {
+            TypeConverter strConv = ec.getNucleusContext().getTypeManager().getTypeConverterForType(requiredType, String.class);
+            String cellValue = (cell.getRichStringCellValue() != null ? cell.getRichStringCellValue().getString() : null);
+            if (cellValue != null && cellValue.length() > 0)
+            {
+                return strConv.toMemberType(cell.getRichStringCellValue().getString());
+            }
+        }
+
+        // Not supported via fallback so just set to null
+        NucleusLogger.PERSISTENCE.warn("Field could not be set in the object since it is not persistable to Excel");
         return null;
     }
 }
