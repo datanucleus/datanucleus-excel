@@ -87,6 +87,14 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                 for (int j=0;j<pkFieldNumbers.length;j++)
                 {
                     AbstractMemberMetaData pkMmd = cmd.getMetaDataForManagedMemberAtAbsolutePosition(pkFieldNumbers[j]);
+                    ClassLoaderResolver clr = ec.getClassLoaderResolver();
+                    RelationType relationType = pkMmd.getRelationType(clr);
+                    if (relationType != RelationType.NONE && MetaDataUtils.getInstance().isMemberEmbedded(ec.getMetaDataManager(), clr, pkMmd, relationType, null))
+                    {
+                        // TODO Cater for embedded id
+                        throw new NucleusUserException("@EmbeddedId is not supported by Excel plugin. Please use IdClass to model the same situation.");
+                    }
+
                     int colNumber = table.getMemberColumnMappingForMember(pkMmd).getColumn(0).getPosition();
                     if (row.getCell(colNumber) == null)
                     {
