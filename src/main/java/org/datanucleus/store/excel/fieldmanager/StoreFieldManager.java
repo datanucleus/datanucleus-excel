@@ -92,15 +92,13 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                     if (relationType != RelationType.NONE && MetaDataUtils.getInstance().isMemberEmbedded(ec.getMetaDataManager(), clr, pkMmd, relationType, null))
                     {
                         // TODO Cater for embedded id
-                        NucleusLogger.GENERAL.info(">> StoreFM need to create cells for PK fields of @EmbeddedId, but NOT YET SUPPORTED : " + pkMmd);
+                        throw new NucleusUserException("@EmbeddedId is not supported by Excel plugin. Please use IdClass to model the same situation.");
                     }
-                    else
+
+                    int colNumber = table.getMemberColumnMappingForMember(pkMmd).getColumn(0).getPosition();
+                    if (row.getCell(colNumber) == null)
                     {
-                        int colNumber = table.getMemberColumnMappingForMember(pkMmd).getColumn(0).getPosition();
-                        if (row.getCell(colNumber) == null)
-                        {
-                            row.createCell(colNumber);
-                        }
+                        row.createCell(colNumber);
                     }
                 }
             }
