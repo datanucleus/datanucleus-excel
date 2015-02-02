@@ -87,10 +87,20 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                 for (int j=0;j<pkFieldNumbers.length;j++)
                 {
                     AbstractMemberMetaData pkMmd = cmd.getMetaDataForManagedMemberAtAbsolutePosition(pkFieldNumbers[j]);
-                    int colNumber = table.getMemberColumnMappingForMember(pkMmd).getColumn(0).getPosition();
-                    if (row.getCell(colNumber) == null)
+                    ClassLoaderResolver clr = ec.getClassLoaderResolver();
+                    RelationType relationType = pkMmd.getRelationType(clr);
+                    if (relationType != RelationType.NONE && MetaDataUtils.getInstance().isMemberEmbedded(ec.getMetaDataManager(), clr, pkMmd, relationType, null))
                     {
-                        row.createCell(colNumber);
+                        // TODO Cater for embedded id
+                        NucleusLogger.GENERAL.info(">> StoreFM need to create cells for PK fields of @EmbeddedId, but NOT YET SUPPORTED : " + pkMmd);
+                    }
+                    else
+                    {
+                        int colNumber = table.getMemberColumnMappingForMember(pkMmd).getColumn(0).getPosition();
+                        if (row.getCell(colNumber) == null)
+                        {
+                            row.createCell(colNumber);
+                        }
                     }
                 }
             }

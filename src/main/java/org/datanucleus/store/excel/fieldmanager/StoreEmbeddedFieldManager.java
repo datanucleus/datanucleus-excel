@@ -113,12 +113,12 @@ public class StoreEmbeddedFieldManager extends StoreFieldManager
                     return;
                 }
             }
-        }
-        else
-        {
-            // TODO Embedded Collection
-            NucleusLogger.PERSISTENCE.debug("Field=" + mmd.getFullFieldName() + " not currently supported (embedded), storing as null");
-            return;
+            else
+            {
+                // TODO Embedded Collection
+                NucleusLogger.PERSISTENCE.debug("Field=" + mmd.getFullFieldName() + " not currently supported (embedded), storing as null");
+                return;
+            }
         }
 
         if (op == null)
