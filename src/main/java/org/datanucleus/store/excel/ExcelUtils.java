@@ -370,16 +370,21 @@ public class ExcelUtils
                     Row row = sheet.getRow(i);
                     if (row != null)
                     {
+                        boolean validRow = true;
                         for (int j=0;j<pkFieldNumbers.length;j++)
                         {
                             AbstractMemberMetaData pkMmd = cmd.getMetaDataForManagedMemberAtAbsolutePosition(pkFieldNumbers[j]);
                             int colNumber = table.getMemberColumnMappingForMember(pkMmd).getColumn(0).getPosition();
                             Cell cell = row.getCell(colNumber);
-                            if (cell != null)
+                            if (cell == null)
                             {
                                 // Valid row. Apache POI would return cell as null if not active
-                                numRows++;
+                                validRow = false;
                             }
+                        }
+                        if (validRow)
+                        {
+                            numRows++;
                         }
                     }
                 }

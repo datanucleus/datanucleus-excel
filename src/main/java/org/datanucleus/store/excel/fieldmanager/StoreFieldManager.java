@@ -396,9 +396,9 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                         return;
                     }
                 }
+                NucleusLogger.PERSISTENCE.warn("DataNucleus doesnt currently support persistence of field " + mmd.getFullFieldName() + 
+                    " type=" + value.getClass().getName() + " - ignoring");
             }
-            NucleusLogger.PERSISTENCE.warn("DataNucleus doesnt currently support persistence of field " + mmd.getFullFieldName() + 
-                " type=" + value.getClass().getName() + " - ignoring");
         }
         else if (RelationType.isRelationSingleValued(relationType))
         {
