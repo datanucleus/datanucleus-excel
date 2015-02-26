@@ -116,11 +116,6 @@ public abstract class ExcelStoreManager extends AbstractStoreManager implements 
             ClassMetaData cmd = (ClassMetaData)iter.next();
             if (cmd.getPersistenceModifier() == ClassPersistenceModifier.PERSISTENCE_CAPABLE && !cmd.isEmbeddedOnly())
             {
-                if (cmd.isAbstract())
-                {
-                    continue;
-                }
-
                 if (!storeDataMgr.managesClass(cmd.getFullClassName()))
                 {
                     StoreData sd = storeDataMgr.get(cmd.getFullClassName());
