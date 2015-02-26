@@ -587,6 +587,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
                 {
                     Object array = null;
                     boolean changeDetected = false;
+                    int pos = 0;
                     if (components != null)
                     {
                         AbstractClassMetaData elementCmd = mmd.getCollection().getElementClassMetaData(ec.getClassLoaderResolver(), ec.getMetaDataManager());
@@ -607,7 +608,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
                                     // Uses legacy identity
                                     element = IdentityUtils.getObjectFromIdString(components[i], elementCmd, ec, true);
                                 }
-                                Array.set(array, i, element);
+                                Array.set(array, pos++, element);
                             }
                             catch (NucleusObjectNotFoundException nfe)
                             {
@@ -621,12 +622,25 @@ public class FetchFieldManager extends AbstractFetchFieldManager
                         array = Array.newInstance(mmd.getType().getComponentType(), 0);
                     }
 
-                    if (op != null)
+                    if (changeDetected)
                     {
-                        array = SCOUtils.wrapSCOField(op, fieldNumber, array, true);
-                        if (changeDetected)
+                        if (pos < Array.getLength(array))
                         {
-                            op.makeDirty(mmd.getAbsoluteFieldNumber());
+                            // Some elements not found, so resize the array
+                            Object arrayOld = array;
+                            array = Array.newInstance(mmd.getType().getComponentType(), pos);
+                            for (int j = 0; j < pos; j++)
+                            {
+                                Array.set(array, j, Array.get(arrayOld, j));
+                            }
+                        }
+                        if (op != null)
+                        {
+                            array = SCOUtils.wrapSCOField(op, fieldNumber, array, true);
+                            if (changeDetected)
+                            {
+                                op.makeDirty(mmd.getAbsoluteFieldNumber());
+                            }
                         }
                     }
                     return array;
