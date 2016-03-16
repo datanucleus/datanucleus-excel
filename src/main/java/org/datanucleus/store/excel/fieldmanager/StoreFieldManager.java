@@ -28,6 +28,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CreationHelper;
@@ -293,6 +294,29 @@ public class StoreFieldManager extends AbstractStoreFieldManager
     {
         MemberColumnMapping mapping = getColumnMapping(fieldNumber);
 
+        boolean optional = false;
+        if (Optional.class.isAssignableFrom(mmd.getType()))
+        {
+            if (relationType != RelationType.NONE)
+            {
+                relationType = RelationType.ONE_TO_ONE_UNI;
+            }
+
+            optional = true;
+            if (value != null)
+            {
+                Optional opt = (Optional)value;
+                if (opt.isPresent())
+                {
+                    value = opt.get();
+                }
+                else
+                {
+                    value = null;
+                }
+            }
+        }
+
         if (relationType == RelationType.NONE)
         {
             if (mapping.getTypeConverter() != null)
@@ -365,14 +389,19 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                 return;
             }
 
-            boolean cellSet = setValueInCellForType(value, mmd.getType(), cell, mapping.getColumn(0).getJdbcType());
+            Class type = mmd.getType();
+            if (optional)
+            {
+                type = clr.classForName(mmd.getCollection().getElementType());
+            }
+            boolean cellSet = setValueInCellForType(value, type, cell, mapping.getColumn(0).getJdbcType());
             if (!cellSet)
             {
                 // Try to persist using converters
                 TypeManager typeMgr = ec.getNucleusContext().getTypeManager();
                 boolean useLong = MetaDataUtils.isJdbcTypeNumeric(mapping.getColumn(0).getJdbcType());
 
-                TypeConverter longConv = typeMgr.getTypeConverterForType(mmd.getType(), Long.class);
+                TypeConverter longConv = typeMgr.getTypeConverterForType(type, Long.class);
                 if (useLong)
                 {
                     if (longConv != null)
@@ -383,7 +412,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                 }
                 else
                 {
-                    TypeConverter strConv = typeMgr.getTypeConverterForType(mmd.getType(), String.class);
+                    TypeConverter strConv = typeMgr.getTypeConverterForType(type, String.class);
                     if (strConv != null)
                     {
                         CreationHelper createHelper = row.getSheet().getWorkbook().getCreationHelper();
@@ -563,6 +592,10 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         else if (Calendar.class.isAssignableFrom(type))
         {
             cell.setCellValue((Calendar)value);
+        }
+        else if (String.class.isAssignableFrom(type))
+        {
+            cell.setCellValue(row.getSheet().getWorkbook().getCreationHelper().createRichTextString((String)value));
         }
         else if (Enum.class.isAssignableFrom(type))
         {

@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -210,6 +211,16 @@ public class FetchFieldManager extends AbstractFetchFieldManager
     {
         MemberColumnMapping mapping = getColumnMapping(fieldNumber);
 
+        boolean optional = false;
+        if (Optional.class.isAssignableFrom(mmd.getType()))
+        {
+            if (relationType != RelationType.NONE)
+            {
+                relationType = RelationType.ONE_TO_ONE_UNI;
+            }
+            optional = true;
+        }
+
         if (relationType == RelationType.NONE)
         {
             Column col = mapping.getColumn(0);
@@ -328,17 +339,15 @@ public class FetchFieldManager extends AbstractFetchFieldManager
             Cell cell = sheet.getRow(rowNumber).getCell(mapping.getColumn(0).getPosition());
             if (cell == null)
             {
-                return null;
+                return optional ? Optional.empty() : null;
             }
 
-            Object value = getValueFromCellOfType(cell, mmd.getType(), col.getJdbcType());
+            Class type = optional ? clr.classForName(mmd.getCollection().getElementType()) : mmd.getType();
+            Object value = getValueFromCellOfType(cell, type, col.getJdbcType());
+            value = optional ? (value != null ? Optional.of(value) : Optional.empty()) : value;
 
             // Wrap the field if it is SCO
-            if (op != null)
-            {
-                return SCOUtils.wrapSCOField(op, fieldNumber, value, true);
-            }
-            return value;
+            return (op != null) ? SCOUtils.wrapSCOField(op, fieldNumber, value, true) : value;
         }
         else if (RelationType.isRelationSingleValued(relationType))
         {
@@ -346,20 +355,21 @@ public class FetchFieldManager extends AbstractFetchFieldManager
             Cell cell = sheet.getRow(rowNumber).getCell(mapping.getColumn(0).getPosition());
             if (cell == null)
             {
-                return null;
+                return optional ? Optional.empty() : null;
             }
 
             String idStr = cell.getRichStringCellValue().getString();
             if (idStr == null)
             {
-                return null;
+                return optional ? Optional.empty() : null;
             }
 
             if (idStr.startsWith("[") && idStr.endsWith("]"))
             {
                 idStr = idStr.substring(1, idStr.length()-1);
                 Object obj = null;
-                AbstractClassMetaData memberCmd = ec.getMetaDataManager().getMetaDataForClass(mmd.getType(), clr);
+                Class memberType = optional ? clr.classForName(mmd.getCollection().getElementType()) : mmd.getType();
+                AbstractClassMetaData memberCmd = ec.getMetaDataManager().getMetaDataForClass(memberType, clr);
                 try
                 {
                     if (memberCmd.usesSingleFieldIdentityClass() && idStr.indexOf(':') > 0)
@@ -378,10 +388,10 @@ public class FetchFieldManager extends AbstractFetchFieldManager
                     NucleusLogger.GENERAL.warn("Object=" + op + " field=" + mmd.getFullFieldName() + " has id=" + idStr + " but could not instantiate object with that identity");
                     return null;
                 }
-                return obj;
+                return optional ? Optional.of(obj) : obj;
             }
 
-            return null;
+            return optional ? Optional.empty() : null;
         }
         else if (RelationType.isRelationMultiValued(relationType))
         {
@@ -696,6 +706,10 @@ public class FetchFieldManager extends AbstractFetchFieldManager
             boolean boolValue = cell.getBooleanCellValue();
             return Boolean.valueOf(boolValue);
         }
+        else if (String.class.isAssignableFrom(requiredType))
+        {
+            return cell.getRichStringCellValue().getString();
+        }
         else if (Character.class.isAssignableFrom(requiredType))
         {
             String strValue = cell.getRichStringCellValue().getString();
@@ -779,7 +793,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
         }
 
         // Not supported as String so just set to null
-        NucleusLogger.PERSISTENCE.warn("Field could not be set in the object since it is not persistable to Excel");
+        NucleusLogger.PERSISTENCE.warn("Field could not be set in the object since it is not persistable to Excel (type=" + requiredType.getName() + ")");
         return null;
     }
 }
