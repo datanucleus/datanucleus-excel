@@ -753,7 +753,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
             }
             else if (BigInteger.class.isAssignableFrom(requiredType))
             {
-                return new BigInteger("" + val);
+                return new BigInteger("" + (Double.valueOf(val).longValue()));
             }
         }
         else if (Enum.class.isAssignableFrom(requiredType))
