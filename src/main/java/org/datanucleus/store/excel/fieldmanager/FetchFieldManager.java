@@ -115,6 +115,11 @@ public class FetchFieldManager extends AbstractFetchFieldManager
         {
             return 0;
         }
+        if (cell.getCellType() == Cell.CELL_TYPE_NUMERIC)
+        {
+            // In case the char was interpreted as a numeric
+            return (char)cell.getNumericCellValue();
+        }
         return cell.getRichStringCellValue().getString().charAt(0);
     }
 
