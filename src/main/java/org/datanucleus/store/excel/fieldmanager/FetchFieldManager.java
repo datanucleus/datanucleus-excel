@@ -55,6 +55,7 @@ import org.datanucleus.store.types.converters.TypeConverter;
 import org.datanucleus.store.types.converters.TypeConverterHelper;
 import org.datanucleus.util.Base64;
 import org.datanucleus.util.NucleusLogger;
+import org.datanucleus.util.StringUtils;
 
 /**
  * FieldManager to handle the retrieval of information from an Excel worksheet row/column into
@@ -239,7 +240,11 @@ public class FetchFieldManager extends AbstractFetchFieldManager
                     Class datastoreType = TypeConverterHelper.getDatastoreTypeForTypeConverter(conv, mmd.getType());
                     if (datastoreType == String.class)
                     {
-                        value = conv.toMemberType(cell.getRichStringCellValue().getString());
+                        String cellValue = cell.getRichStringCellValue().getString();
+                        if (!StringUtils.isWhitespace(cellValue))
+                        {
+                            value = conv.toMemberType(cellValue);
+                        }
                     }
                     else if (Number.class.isAssignableFrom(datastoreType))
                     {
