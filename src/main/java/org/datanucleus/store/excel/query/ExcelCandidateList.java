@@ -50,6 +50,8 @@ public class ExcelCandidateList extends AbstractCandidateLazyLoadList
 
     boolean ignoreCache;
 
+    FetchPlan fetchPlan;
+
     /** Number of objects per class, in same order as class meta-data. */
     List<Integer> numberInstancesPerClass = null;
 
@@ -61,12 +63,14 @@ public class ExcelCandidateList extends AbstractCandidateLazyLoadList
      * @param cacheType Type of caching
      * @param mconn Connection to the datastore
      * @param ignoreCache Whether to ignore the cache on object retrieval
+     * @param fp Fetch Plan
      */
-    public ExcelCandidateList(Class cls, boolean subclasses, ExecutionContext ec, String cacheType, ManagedConnection mconn, boolean ignoreCache)
+    public ExcelCandidateList(Class cls, boolean subclasses, ExecutionContext ec, String cacheType, ManagedConnection mconn, boolean ignoreCache, FetchPlan fp)
     {
         super(cls, subclasses, ec, cacheType);
         this.mconn = mconn;
         this.ignoreCache = ignoreCache;
+        this.fetchPlan = fp;
 
         // Count the instances per class by scanning the associated worksheets
         numberInstancesPerClass = new ArrayList<Integer>();
@@ -189,6 +193,7 @@ public class ExcelCandidateList extends AbstractCandidateLazyLoadList
                             {
                                 // This row equates to the required index
                                 final int rowNumber = i;
+                                int[] fpFieldNums = fetchPlan.getFetchPlanForClass(cmd).getMemberNumbers();
                                 if (cmd.getIdentityType() == IdentityType.APPLICATION)
                                 {
                                     final FetchFieldManager fm = new FetchFieldManager(ec, cmd, worksheet, rowNumber, table);
@@ -199,11 +204,11 @@ public class ExcelCandidateList extends AbstractCandidateLazyLoadList
                                         // ObjectProvider calls the fetchFields method
                                         public void fetchFields(ObjectProvider op)
                                         {
-                                            op.replaceFields(cmd.getAllMemberPositions(), fm);
+                                            op.replaceFields(fpFieldNums, fm);
                                         }
                                         public void fetchNonLoadedFields(ObjectProvider sm)
                                         {
-                                            sm.replaceNonLoadedFields(cmd.getAllMemberPositions(), fm);
+                                            sm.replaceNonLoadedFields(fpFieldNums, fm);
                                         }
                                         public FetchPlan getFetchPlanForLoading()
                                         {
@@ -232,11 +237,11 @@ public class ExcelCandidateList extends AbstractCandidateLazyLoadList
                                         // ObjectProvider calls the fetchFields method
                                         public void fetchFields(ObjectProvider op)
                                         {
-                                            op.replaceFields(cmd.getAllMemberPositions(), fm);
+                                            op.replaceFields(fpFieldNums, fm);
                                         }
                                         public void fetchNonLoadedFields(ObjectProvider op)
                                         {
-                                            op.replaceNonLoadedFields(cmd.getAllMemberPositions(), fm);
+                                            op.replaceNonLoadedFields(fpFieldNums, fm);
                                         }
                                         public FetchPlan getFetchPlanForLoading()
                                         {
@@ -254,11 +259,11 @@ public class ExcelCandidateList extends AbstractCandidateLazyLoadList
                                         // ObjectProvider calls the fetchFields method
                                         public void fetchFields(ObjectProvider op)
                                         {
-                                            op.replaceFields(cmd.getAllMemberPositions(), fm);
+                                            op.replaceFields(fpFieldNums, fm);
                                         }
                                         public void fetchNonLoadedFields(ObjectProvider sm)
                                         {
-                                            sm.replaceNonLoadedFields(cmd.getAllMemberPositions(), fm);
+                                            sm.replaceNonLoadedFields(fpFieldNums, fm);
                                         }
                                         public FetchPlan getFetchPlanForLoading()
                                         {

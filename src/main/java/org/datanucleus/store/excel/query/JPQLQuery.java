@@ -94,8 +94,7 @@ public class JPQLQuery extends AbstractJPQLQuery
             List candidates = null;
             if (candidateCollection == null)
             {
-                candidates = new ExcelCandidateList(candidateClass, subclasses, ec,
-                    (String)getExtension(Query.EXTENSION_RESULT_CACHE_TYPE), mconn, ignoreCache);
+                candidates = new ExcelCandidateList(candidateClass, subclasses, ec, (String)getExtension(Query.EXTENSION_RESULT_CACHE_TYPE), mconn, ignoreCache, getFetchPlan());
             }
             else
             {
