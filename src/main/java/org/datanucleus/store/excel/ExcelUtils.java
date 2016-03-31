@@ -34,8 +34,12 @@ import org.datanucleus.metadata.AbstractMemberMetaData;
 import org.datanucleus.metadata.IdentityType;
 import org.datanucleus.metadata.RelationType;
 import org.datanucleus.state.ObjectProvider;
+import org.datanucleus.store.schema.table.MemberColumnMapping;
 import org.datanucleus.store.schema.table.Table;
+import org.datanucleus.store.types.converters.TypeConverterHelper;
 import org.datanucleus.util.Localiser;
+import org.datanucleus.util.NucleusLogger;
+import org.datanucleus.util.StringUtils;
 
 /**
  * Class providing convenience methods for handling Excel datastores.
@@ -82,7 +86,7 @@ public class ExcelUtils
             ExecutionContext ec = op.getExecutionContext();
             ClassLoaderResolver clr = ec.getClassLoaderResolver();
             int[] pkFieldNumbers = cmd.getPKMemberPositions();
-
+NucleusLogger.GENERAL.info(">> getRowNum type=" + cmd.getFullClassName() + " pkFieldNums=" + StringUtils.intArrayToString(pkFieldNumbers));
             List<Integer> pkFieldColList = new ArrayList(pkFieldNumbers.length);
             List pkFieldValList = new ArrayList(pkFieldNumbers.length);
             List<Class> pkFieldTypeList = new ArrayList(pkFieldNumbers.length);
@@ -90,6 +94,7 @@ public class ExcelUtils
             {
                 Object fieldValue = op.provideField(pkFieldNumbers[i]);
                 AbstractMemberMetaData mmd = cmd.getMetaDataForManagedMemberAtAbsolutePosition(pkFieldNumbers[i]);
+                NucleusLogger.GENERAL.info(">> Field=" + mmd.getFullFieldName() + " value=" + fieldValue + " " + StringUtils.toJVMIDString(fieldValue));
                 RelationType relationType = mmd.getRelationType(clr);
                 if (RelationType.isRelationSingleValued(relationType) && mmd.isEmbedded())
                 {
@@ -107,16 +112,34 @@ public class ExcelUtils
                         List<AbstractMemberMetaData> embMmds = new ArrayList();
                         embMmds.add(mmd);
                         embMmds.add(embMmd);
-                        pkFieldColList.add(table.getMemberColumnMappingForEmbeddedMember(embMmds).getColumn(0).getPosition());
-                        pkFieldValList.add(embOP.provideField(j));
-                        pkFieldTypeList.add(embMmd.getType());
+                        MemberColumnMapping mapping = table.getMemberColumnMappingForEmbeddedMember(embMmds);
+                        pkFieldColList.add(mapping.getColumn(0).getPosition());
+                        if (mapping.getTypeConverter() != null)
+                        {
+                            pkFieldValList.add(mapping.getTypeConverter().toDatastoreType(embOP.provideField(j)));
+                            pkFieldTypeList.add(TypeConverterHelper.getDatastoreTypeForTypeConverter(mapping.getTypeConverter(), embMmd.getType()));
+                        }
+                        else
+                        {
+                            pkFieldValList.add(embOP.provideField(j));
+                            pkFieldTypeList.add(embMmd.getType());
+                        }
                     }
                 }
                 else
                 {
-                    pkFieldColList.add(table.getMemberColumnMappingForMember(mmd).getColumn(0).getPosition());
-                    pkFieldValList.add(fieldValue);
-                    pkFieldTypeList.add(mmd.getType());
+                    MemberColumnMapping mapping = table.getMemberColumnMappingForMember(mmd);
+                    pkFieldColList.add(mapping.getColumn(0).getPosition());
+                    if (mapping.getTypeConverter() != null)
+                    {
+                        pkFieldValList.add(mapping.getTypeConverter().toDatastoreType(fieldValue));
+                        pkFieldTypeList.add(TypeConverterHelper.getDatastoreTypeForTypeConverter(mapping.getTypeConverter(), mmd.getType()));
+                    }
+                    else
+                    {
+                        pkFieldValList.add(fieldValue);
+                        pkFieldTypeList.add(mmd.getType());
+                    }
                 }
             }
 
@@ -284,53 +307,43 @@ public class ExcelUtils
             return false;
         }
 
-        if (String.class.isAssignableFrom(fieldType) && 
-            cell.getRichStringCellValue().getString().equals(fieldValue))
+        if (String.class.isAssignableFrom(fieldType) && cell.getRichStringCellValue().getString().equals(fieldValue))
         {
             return true;
         }
-        else if ((fieldType == int.class || fieldType == Integer.class) && 
-                ((Integer)fieldValue).intValue() == (int)cell.getNumericCellValue())
+        else if ((fieldType == int.class || fieldType == Integer.class) && ((Integer)fieldValue).intValue() == (int)cell.getNumericCellValue())
         {
             return true;
         }
-        else if ((fieldType == long.class || fieldType == Long.class) && 
-                ((Long)fieldValue).longValue() == (long)cell.getNumericCellValue())
+        else if ((fieldType == long.class || fieldType == Long.class) && ((Long)fieldValue).longValue() == (long)cell.getNumericCellValue())
         {
             return true;
         }
-        else if ((fieldType == short.class || fieldType == Short.class) && 
-                ((Short)fieldValue).shortValue() == (short)cell.getNumericCellValue())
+        else if ((fieldType == short.class || fieldType == Short.class) && ((Short)fieldValue).shortValue() == (short)cell.getNumericCellValue())
         {
             return true;
         }
-        else if ((fieldType == float.class || fieldType == Float.class) &&
-                ((Float)fieldValue).floatValue() == (float)cell.getNumericCellValue())
+        else if ((fieldType == float.class || fieldType == Float.class) && ((Float)fieldValue).floatValue() == (float)cell.getNumericCellValue())
         {
             return true;
         }
-        else if ((fieldType == double.class || fieldType == Double.class) && 
-                ((Double)fieldValue).doubleValue() == cell.getNumericCellValue())
+        else if ((fieldType == double.class || fieldType == Double.class) && ((Double)fieldValue).doubleValue() == cell.getNumericCellValue())
         {
             return true;
         }
-        else if ((fieldType == boolean.class || fieldType == Boolean.class) && 
-                ((Boolean)fieldValue).booleanValue() == cell.getBooleanCellValue())
+        else if ((fieldType == boolean.class || fieldType == Boolean.class) && ((Boolean)fieldValue).booleanValue() == cell.getBooleanCellValue())
         {
             return true;
         }
-        else if ((fieldType == byte.class || fieldType == Byte.class) && 
-                ((Byte)fieldValue).byteValue() == (byte)cell.getNumericCellValue())
+        else if ((fieldType == byte.class || fieldType == Byte.class) && ((Byte)fieldValue).byteValue() == (byte)cell.getNumericCellValue())
         {
             return true;
         }
-        else if ((fieldType == char.class || fieldType == Character.class) && 
-                ((Character)fieldValue).charValue() == cell.getRichStringCellValue().getString().charAt(0))
+        else if ((fieldType == char.class || fieldType == Character.class) && ((Character)fieldValue).charValue() == cell.getRichStringCellValue().getString().charAt(0))
         {
             return true;
         }
-        else if ((Date.class.isAssignableFrom(fieldType) && 
-                ((Date)fieldValue).getTime() == cell.getDateCellValue().getTime()))
+        else if ((Date.class.isAssignableFrom(fieldType) && ((Date)fieldValue).getTime() == cell.getDateCellValue().getTime()))
         {
             return true;
         }
