@@ -396,7 +396,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
                 catch (NucleusObjectNotFoundException nfe)
                 {
                     NucleusLogger.GENERAL.warn("Object=" + op + " field=" + mmd.getFullFieldName() + " has id=" + idStr + " but could not instantiate object with that identity");
-                    return null;
+                    return optional ? Optional.empty() : null;
                 }
                 return optional ? Optional.of(obj) : obj;
             }
