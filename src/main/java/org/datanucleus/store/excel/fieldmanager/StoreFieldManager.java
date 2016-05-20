@@ -39,8 +39,8 @@ import org.datanucleus.exceptions.NucleusUserException;
 import org.datanucleus.identity.IdentityUtils;
 import org.datanucleus.metadata.AbstractClassMetaData;
 import org.datanucleus.metadata.AbstractMemberMetaData;
+import org.datanucleus.metadata.FieldRole;
 import org.datanucleus.metadata.IdentityType;
-import org.datanucleus.metadata.JdbcType;
 import org.datanucleus.metadata.MetaDataUtils;
 import org.datanucleus.metadata.RelationType;
 import org.datanucleus.state.ObjectProvider;
@@ -56,6 +56,7 @@ import org.datanucleus.util.Base64;
 import org.datanucleus.util.ClassUtils;
 import org.datanucleus.util.Localiser;
 import org.datanucleus.util.NucleusLogger;
+import org.datanucleus.util.TypeConversionHelper;
 
 /**
  * FieldManager to handle the store information into an Excel worksheet row using an object.
@@ -334,7 +335,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                         return;
                     }
 
-                    boolean cellSet = setValueInCellForType(datastoreValue, datastoreType, cell, mapping.getColumn(0).getJdbcType());
+                    boolean cellSet = setValueInCellForType(mapping, 0, datastoreValue, datastoreType, cell);
                     if (!cellSet)
                     {
                         NucleusLogger.DATASTORE_PERSIST.warn("TypeConverter for member " + mmd.getFullFieldName() + " converts to " + datastoreType.getName() + 
@@ -371,7 +372,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                         {
                             cellValueType = Long.class;
                         }
-                        boolean cellSet = setValueInCellForType(cellValue, cellValueType, cell, mapping.getColumn(i).getJdbcType());
+                        boolean cellSet = setValueInCellForType(mapping, i, cellValue, cellValueType, cell);
                         if (!cellSet)
                         {
                             NucleusLogger.DATASTORE_PERSIST.warn("TypeConverter for member " + mmd.getFullFieldName() + " converts to column " + i + 
@@ -394,7 +395,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
             {
                 type = clr.classForName(mmd.getCollection().getElementType());
             }
-            boolean cellSet = setValueInCellForType(value, type, cell, mapping.getColumn(0).getJdbcType());
+            boolean cellSet = setValueInCellForType(mapping, 0, value, type, cell);
             if (!cellSet)
             {
                 // Try to persist using converters
@@ -571,8 +572,10 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         }
     }
 
-    protected boolean setValueInCellForType(Object value, Class type, Cell cell, JdbcType jdbcType)
+    protected boolean setValueInCellForType(MemberColumnMapping mapping, int pos, Object value, Class type, Cell cell)
     {
+        AbstractMemberMetaData mmd = mapping.getMemberMetaData();
+
         if (Number.class.isAssignableFrom(type))
         {
             cell.setCellValue(((Number)value).doubleValue());
@@ -599,13 +602,14 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         }
         else if (Enum.class.isAssignableFrom(type))
         {
-            if (MetaDataUtils.isJdbcTypeNumeric(jdbcType))
+            Object datastoreValue = TypeConversionHelper.getStoredValueFromEnum(mmd, FieldRole.ROLE_FIELD, (Enum) value);
+            if (datastoreValue instanceof Number)
             {
-                cell.setCellValue(((Enum)value).ordinal());
+                cell.setCellValue(((Number)datastoreValue).doubleValue());
             }
             else
             {
-                cell.setCellValue(row.getSheet().getWorkbook().getCreationHelper().createRichTextString(((Enum)value).name()));
+                cell.setCellValue(row.getSheet().getWorkbook().getCreationHelper().createRichTextString((String)datastoreValue));
             }
         }
         else if (byte[].class == type)

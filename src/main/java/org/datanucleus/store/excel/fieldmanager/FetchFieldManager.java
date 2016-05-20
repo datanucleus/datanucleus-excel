@@ -40,6 +40,7 @@ import org.datanucleus.exceptions.NucleusUserException;
 import org.datanucleus.identity.IdentityUtils;
 import org.datanucleus.metadata.AbstractClassMetaData;
 import org.datanucleus.metadata.AbstractMemberMetaData;
+import org.datanucleus.metadata.FieldRole;
 import org.datanucleus.metadata.JdbcType;
 import org.datanucleus.metadata.MetaDataUtils;
 import org.datanucleus.metadata.RelationType;
@@ -47,7 +48,6 @@ import org.datanucleus.query.QueryUtils;
 import org.datanucleus.state.ObjectProvider;
 import org.datanucleus.store.fieldmanager.AbstractFetchFieldManager;
 import org.datanucleus.store.fieldmanager.FieldManager;
-import org.datanucleus.store.schema.table.Column;
 import org.datanucleus.store.schema.table.MemberColumnMapping;
 import org.datanucleus.store.schema.table.Table;
 import org.datanucleus.store.types.SCOUtils;
@@ -57,6 +57,7 @@ import org.datanucleus.store.types.converters.TypeConverterHelper;
 import org.datanucleus.util.Base64;
 import org.datanucleus.util.NucleusLogger;
 import org.datanucleus.util.StringUtils;
+import org.datanucleus.util.TypeConversionHelper;
 
 /**
  * FieldManager to handle the retrieval of information from an Excel worksheet row/column into
@@ -230,7 +231,6 @@ public class FetchFieldManager extends AbstractFetchFieldManager
 
         if (relationType == RelationType.NONE)
         {
-            Column col = mapping.getColumn(0);
             if (mapping.getTypeConverter() != null)
             {
                 TypeConverter conv = mapping.getTypeConverter();
@@ -318,17 +318,17 @@ public class FetchFieldManager extends AbstractFetchFieldManager
                         isNull = false;
                         if (colTypes[i] == int.class)
                         {
-                            Object cellValue = getValueFromCellOfType(cell, Integer.class, mapping.getColumn(i).getJdbcType());
+                            Object cellValue = getValueFromCellOfType(mapping, i, cell, Integer.class);
                             Array.set(valuesArr, i, ((Integer)cellValue).intValue());
                         }
                         else if (colTypes[i] == long.class)
                         {
-                            Object cellValue = getValueFromCellOfType(cell, Long.class, mapping.getColumn(i).getJdbcType());
+                            Object cellValue = getValueFromCellOfType(mapping, i, cell, Long.class);
                             Array.set(valuesArr, i, ((Long)cellValue).longValue());
                         }
                         else
                         {
-                            Object cellValue = getValueFromCellOfType(cell, colTypes[i], mapping.getColumn(i).getJdbcType());
+                            Object cellValue = getValueFromCellOfType(mapping, i, cell, colTypes[i]);
                             Array.set(valuesArr, i, cellValue);
                         }
                     }
@@ -354,7 +354,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
             }
 
             Class type = optional ? clr.classForName(mmd.getCollection().getElementType()) : mmd.getType();
-            Object value = getValueFromCellOfType(cell, type, col.getJdbcType());
+            Object value = getValueFromCellOfType(mapping, 0, cell, type);
             value = optional ? (value != null ? Optional.of(value) : Optional.empty()) : value;
 
             // Wrap the field if it is SCO
@@ -688,8 +688,10 @@ public class FetchFieldManager extends AbstractFetchFieldManager
         throw new NucleusException("Dont currently support retrieval of type " + mmd.getTypeName());
     }
 
-    protected Object getValueFromCellOfType(Cell cell, Class requiredType, JdbcType jdbcType)
+    protected Object getValueFromCellOfType(MemberColumnMapping mapping, int pos, Cell cell, Class requiredType)
     {
+        AbstractMemberMetaData mmd = mapping.getMemberMetaData();
+
         if (Date.class.isAssignableFrom(requiredType))
         {
             Date date = cell.getDateCellValue();
@@ -777,19 +779,21 @@ public class FetchFieldManager extends AbstractFetchFieldManager
         }
         else if (Enum.class.isAssignableFrom(requiredType))
         {
-            if (MetaDataUtils.isJdbcTypeNumeric(jdbcType))
+            JdbcType enumJdbcType = TypeConversionHelper.getJdbcTypeForEnum(mmd, FieldRole.ROLE_FIELD, ec.getClassLoaderResolver());
+            Object datastoreValue = null;
+            if (MetaDataUtils.isJdbcTypeNumeric(enumJdbcType))
             {
-                double value = cell.getNumericCellValue();
-                return requiredType.getEnumConstants()[(int)value];
+                datastoreValue = cell.getNumericCellValue();
             }
-
-            String value = cell.getRichStringCellValue().getString();
-            if (value != null && value.length() > 0)
+            else
             {
-                return Enum.valueOf(requiredType, value);
+                datastoreValue = cell.getRichStringCellValue().getString();
             }
-
-            return null;
+            if (datastoreValue == null)
+            {
+                return null;
+            }
+            return TypeConversionHelper.getEnumForStoredValue(mmd, FieldRole.ROLE_FIELD, datastoreValue, ec.getClassLoaderResolver());
         }
         else if (requiredType == byte[].class)
         {
