@@ -29,6 +29,7 @@ import org.datanucleus.exceptions.NucleusUserException;
 import org.datanucleus.store.connection.ManagedConnection;
 import org.datanucleus.store.valuegenerator.AbstractDatastoreGenerator;
 import org.datanucleus.store.valuegenerator.ValueGenerationBlock;
+import org.datanucleus.store.valuegenerator.ValueGenerator;
 import org.datanucleus.util.Localiser;
 import org.datanucleus.util.NucleusLogger;
 
@@ -62,15 +63,15 @@ public class IncrementGenerator extends AbstractDatastoreGenerator<Long>
     public IncrementGenerator(String name, Properties props)
     {
         super(name, props);
-        this.key = properties.getProperty("field-name", name);
-        this.worksheetName = properties.getProperty("sequence-table-name");
+        this.key = properties.getProperty(ValueGenerator.PROPERTY_FIELD_NAME, name);
+        this.worksheetName = properties.getProperty(ValueGenerator.PROPERTY_SEQUENCETABLE_TABLE);
         if (this.worksheetName == null)
         {
             this.worksheetName = "IncrementTable";
         }
-        if (properties.containsKey("key-cache-size"))
+        if (properties.containsKey(ValueGenerator.PROPERTY_KEY_CACHE_SIZE))
         {
-            allocationSize = Integer.valueOf(properties.getProperty("key-cache-size"));
+            allocationSize = Integer.valueOf(properties.getProperty(ValueGenerator.PROPERTY_KEY_CACHE_SIZE));
         }
         else
         {
