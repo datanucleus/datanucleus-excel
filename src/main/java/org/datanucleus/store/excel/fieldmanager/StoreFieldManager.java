@@ -33,6 +33,7 @@ import java.util.Optional;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Row.MissingCellPolicy;
 import org.datanucleus.ClassLoaderResolver;
 import org.datanucleus.ExecutionContext;
 import org.datanucleus.exceptions.NucleusUserException;
@@ -126,7 +127,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         {
             return;
         }
-        Cell cell = row.getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition(), Row.CREATE_NULL_AS_BLANK);
+        Cell cell = row.getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition(), MissingCellPolicy.CREATE_NULL_AS_BLANK);
         cell.setCellValue(value);
     }
 
@@ -136,7 +137,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         {
             return;
         }
-        Cell cell = row.getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition(), Row.CREATE_NULL_AS_BLANK);
+        Cell cell = row.getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition(), MissingCellPolicy.CREATE_NULL_AS_BLANK);
         cell.setCellValue(value);
     }
 
@@ -146,7 +147,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         {
             return;
         }
-        Cell cell = row.getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition(), Row.CREATE_NULL_AS_BLANK);
+        Cell cell = row.getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition(), MissingCellPolicy.CREATE_NULL_AS_BLANK);
         cell.setCellValue(value);
     }
 
@@ -156,7 +157,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         {
             return;
         }
-        Cell cell = row.getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition(), Row.CREATE_NULL_AS_BLANK);
+        Cell cell = row.getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition(), MissingCellPolicy.CREATE_NULL_AS_BLANK);
         cell.setCellValue(value);
     }
 
@@ -166,7 +167,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         {
             return;
         }
-        Cell cell = row.getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition(), Row.CREATE_NULL_AS_BLANK);
+        Cell cell = row.getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition(), MissingCellPolicy.CREATE_NULL_AS_BLANK);
         cell.setCellValue(value);
     }
 
@@ -176,7 +177,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         {
             return;
         }
-        Cell cell = row.getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition(), Row.CREATE_NULL_AS_BLANK);
+        Cell cell = row.getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition(), MissingCellPolicy.CREATE_NULL_AS_BLANK);
         cell.setCellValue(value);
     }
 
@@ -186,7 +187,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         {
             return;
         }
-        Cell cell = row.getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition(), Row.CREATE_NULL_AS_BLANK);
+        Cell cell = row.getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition(), MissingCellPolicy.CREATE_NULL_AS_BLANK);
         cell.setCellValue(value);
     }
 
@@ -196,7 +197,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         {
             return;
         }
-        Cell cell = row.getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition(), Row.CREATE_NULL_AS_BLANK);
+        Cell cell = row.getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition(), MissingCellPolicy.CREATE_NULL_AS_BLANK);
         cell.setCellValue(value);
     }
 
@@ -206,7 +207,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         {
             return;
         }
-        Cell cell = row.getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition(), Row.CREATE_NULL_AS_BLANK);
+        Cell cell = row.getCell(getColumnMapping(fieldNumber).getColumn(0).getPosition(), MissingCellPolicy.CREATE_NULL_AS_BLANK);
         if (value == null)
         {
             row.removeCell(cell);
@@ -328,7 +329,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                 Class datastoreType = TypeConverterHelper.getDatastoreTypeForTypeConverter(conv, mmd.getType());
                 if (mapping.getNumberOfColumns() == 1)
                 {
-                    Cell cell = row.getCell(mapping.getColumn(0).getPosition(), Row.CREATE_NULL_AS_BLANK);
+                    Cell cell = row.getCell(mapping.getColumn(0).getPosition(), MissingCellPolicy.CREATE_NULL_AS_BLANK);
                     if (value == null)
                     {
                         row.removeCell(cell);
@@ -361,7 +362,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                     for (int i=0;i<mapping.getNumberOfColumns();i++)
                     {
                         // Set each component cell
-                        Cell cell = row.getCell(mapping.getColumn(i).getPosition(), Row.CREATE_NULL_AS_BLANK);
+                        Cell cell = row.getCell(mapping.getColumn(i).getPosition(), MissingCellPolicy.CREATE_NULL_AS_BLANK);
                         Object cellValue = Array.get(datastoreValue, i);
                         Class cellValueType = colTypes[i];
                         if (cellValueType == int.class)
@@ -383,7 +384,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                 return;
             }
 
-            Cell cell = row.getCell(mapping.getColumn(0).getPosition(), Row.CREATE_NULL_AS_BLANK);
+            Cell cell = row.getCell(mapping.getColumn(0).getPosition(), MissingCellPolicy.CREATE_NULL_AS_BLANK);
             if (value == null)
             {
                 row.removeCell(cell);
@@ -445,7 +446,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
             }
 
             // Persistable object - persist the related object and store the identity in the cell
-            Cell cell = row.getCell(mapping.getColumn(0).getPosition(), Row.CREATE_NULL_AS_BLANK);
+            Cell cell = row.getCell(mapping.getColumn(0).getPosition(), MissingCellPolicy.CREATE_NULL_AS_BLANK);
             if (value == null)
             {
                 row.removeCell(cell);
@@ -461,7 +462,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         else if (RelationType.isRelationMultiValued(relationType))
         {
             // Collection/Map/Array
-            Cell cell = row.getCell(mapping.getColumn(0).getPosition(), Row.CREATE_NULL_AS_BLANK);
+            Cell cell = row.getCell(mapping.getColumn(0).getPosition(), MissingCellPolicy.CREATE_NULL_AS_BLANK);
             if (value == null)
             {
                 row.removeCell(cell);
