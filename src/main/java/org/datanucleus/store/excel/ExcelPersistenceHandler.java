@@ -45,6 +45,7 @@ import org.datanucleus.store.connection.ManagedConnection;
 import org.datanucleus.store.excel.fieldmanager.FetchFieldManager;
 import org.datanucleus.store.excel.fieldmanager.StoreFieldManager;
 import org.datanucleus.store.fieldmanager.DeleteFieldManager;
+import org.datanucleus.store.schema.table.MemberColumnMapping;
 import org.datanucleus.store.schema.table.Table;
 import org.datanucleus.util.Localiser;
 import org.datanucleus.util.NucleusLogger;
@@ -186,11 +187,25 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
             if (vermd != null)
             {
                 // versioned object so set its version
-                int verCellNum = table.getVersionColumn().getPosition();
-                Cell verCell = row.getCell(verCellNum);
-                if (verCell == null)
+                Cell verCell = null;
+                if (vermd.getFieldName() != null)
                 {
-                    verCell = row.createCell(verCellNum);
+                    AbstractMemberMetaData verMmd = cmd.getMetaDataForMember(vermd.getFieldName());
+                    MemberColumnMapping mapping = table.getMemberColumnMappingForMember(verMmd);
+                    verCell = row.getCell(mapping.getColumn(0).getPosition());
+                    if (verCell == null)
+                    {
+                        verCell = row.createCell(mapping.getColumn(0).getPosition());
+                    }
+                }
+                else
+                {
+                    int verCellNum = table.getVersionColumn().getPosition();
+                    verCell = row.getCell(verCellNum);
+                    if (verCell == null)
+                    {
+                        verCell = row.createCell(verCellNum);
+                    }
                 }
 
                 Object nextVersion = VersionHelper.getNextVersion(vermd.getVersionStrategy(), null);
@@ -339,7 +354,17 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                         op.getObjectAsPrintable(), op.getInternalObjectId(), "" + nextVersion));
                 }
 
-                Cell verCell = row.getCell(table.getVersionColumn().getPosition());
+                Cell verCell = null;
+                if (vermd.getFieldName() != null)
+                {
+                    AbstractMemberMetaData verMmd = cmd.getMetaDataForMember(vermd.getFieldName());
+                    MemberColumnMapping mapping = table.getMemberColumnMappingForMember(verMmd);
+                    verCell = row.getCell(mapping.getColumn(0).getPosition());
+                }
+                else
+                {
+                    verCell = row.getCell(table.getVersionColumn().getPosition());
+                }
                 if (nextVersion instanceof Long)
                 {
                     verCell.setCellValue(((Long)nextVersion).longValue());
