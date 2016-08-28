@@ -126,6 +126,8 @@ public abstract class AbstractExcelManagedConnection extends AbstractManagedConn
                 listeners.get(i).managedConnectionPostClose();
             }
         }
+
+        super.close();
     }
 
     public XAResource getXAResource()
