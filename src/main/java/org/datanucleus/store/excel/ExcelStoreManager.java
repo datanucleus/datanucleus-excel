@@ -78,6 +78,7 @@ public abstract class ExcelStoreManager extends AbstractStoreManager implements 
         set.add(StoreManager.OPTION_TXN_ISOLATION_READ_COMMITTED);
         set.add(StoreManager.OPTION_QUERY_JDOQL_BULK_DELETE);
         set.add(StoreManager.OPTION_QUERY_JPQL_BULK_DELETE);
+        set.add(StoreManager.OPTION_ORM_INHERITANCE_COMPLETE_TABLE);
         return set;
     }
 
