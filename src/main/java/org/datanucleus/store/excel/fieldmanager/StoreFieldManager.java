@@ -510,8 +510,8 @@ public class StoreFieldManager extends AbstractStoreFieldManager
             }
             else if (mmd.hasMap())
             {
-                AbstractClassMetaData keyCmd = mmd.getMap().getKeyClassMetaData(clr, ec.getMetaDataManager());
-                AbstractClassMetaData valCmd = mmd.getMap().getValueClassMetaData(clr, ec.getMetaDataManager());
+                AbstractClassMetaData keyCmd = mmd.getMap().getKeyClassMetaData(clr);
+                AbstractClassMetaData valCmd = mmd.getMap().getValueClassMetaData(clr);
 
                 StringBuilder cellValue = new StringBuilder("[");
                 Map map = (Map)value;
