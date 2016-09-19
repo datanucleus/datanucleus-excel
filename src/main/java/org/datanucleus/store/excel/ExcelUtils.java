@@ -36,7 +36,6 @@ import org.datanucleus.metadata.RelationType;
 import org.datanucleus.state.ObjectProvider;
 import org.datanucleus.store.schema.table.MemberColumnMapping;
 import org.datanucleus.store.schema.table.Table;
-import org.datanucleus.store.types.converters.TypeConverterHelper;
 import org.datanucleus.util.Localiser;
 import org.datanucleus.util.NucleusLogger;
 import org.datanucleus.util.StringUtils;
@@ -104,7 +103,7 @@ NucleusLogger.GENERAL.info(">> getRowNum type=" + cmd.getFullClassName() + " pkF
                     {
                         embOP = ec.getNucleusContext().getObjectProviderFactory().newForEmbedded(ec, fieldValue, false, op, pkFieldNumbers[i]);
                     }
-                    AbstractClassMetaData embCmd = op.getExecutionContext().getMetaDataManager().getMetaDataForClass(mmd.getType(), clr);
+                    AbstractClassMetaData embCmd = ec.getMetaDataManager().getMetaDataForClass(mmd.getType(), clr);
                     for (int j=0;j<embCmd.getNoOfManagedMembers();j++)
                     {
                         // TODO Support nested embedded
@@ -117,7 +116,7 @@ NucleusLogger.GENERAL.info(">> getRowNum type=" + cmd.getFullClassName() + " pkF
                         if (mapping.getTypeConverter() != null)
                         {
                             pkFieldValList.add(mapping.getTypeConverter().toDatastoreType(embOP.provideField(j)));
-                            pkFieldTypeList.add(TypeConverterHelper.getDatastoreTypeForTypeConverter(mapping.getTypeConverter(), embMmd.getType()));
+                            pkFieldTypeList.add(ec.getTypeManager().getDatastoreTypeForTypeConverter(mapping.getTypeConverter(), embMmd.getType()));
                         }
                         else
                         {
@@ -133,7 +132,7 @@ NucleusLogger.GENERAL.info(">> getRowNum type=" + cmd.getFullClassName() + " pkF
                     if (mapping.getTypeConverter() != null)
                     {
                         pkFieldValList.add(mapping.getTypeConverter().toDatastoreType(fieldValue));
-                        pkFieldTypeList.add(TypeConverterHelper.getDatastoreTypeForTypeConverter(mapping.getTypeConverter(), mmd.getType()));
+                        pkFieldTypeList.add(ec.getTypeManager().getDatastoreTypeForTypeConverter(mapping.getTypeConverter(), mmd.getType()));
                     }
                     else
                     {

@@ -53,7 +53,6 @@ import org.datanucleus.store.schema.table.Table;
 import org.datanucleus.store.types.SCOUtils;
 import org.datanucleus.store.types.converters.MultiColumnConverter;
 import org.datanucleus.store.types.converters.TypeConverter;
-import org.datanucleus.store.types.converters.TypeConverterHelper;
 import org.datanucleus.util.Base64;
 import org.datanucleus.util.NucleusLogger;
 import org.datanucleus.util.StringUtils;
@@ -243,7 +242,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
                     }
 
                     Object value = null;
-                    Class datastoreType = TypeConverterHelper.getDatastoreTypeForTypeConverter(conv, mmd.getType());
+                    Class datastoreType = ec.getTypeManager().getDatastoreTypeForTypeConverter(conv, mmd.getType());
                     if (datastoreType == String.class)
                     {
                         String cellValue = cell.getRichStringCellValue().getString();
