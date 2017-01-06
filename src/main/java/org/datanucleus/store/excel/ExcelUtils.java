@@ -35,6 +35,7 @@ import org.datanucleus.metadata.IdentityType;
 import org.datanucleus.metadata.RelationType;
 import org.datanucleus.state.ObjectProvider;
 import org.datanucleus.store.schema.table.MemberColumnMapping;
+import org.datanucleus.store.schema.table.SurrogateColumnType;
 import org.datanucleus.store.schema.table.Table;
 import org.datanucleus.util.Localiser;
 import org.datanucleus.util.NucleusLogger;
@@ -178,7 +179,7 @@ NucleusLogger.GENERAL.info(">> getRowNum type=" + cmd.getFullClassName() + " pkF
         {
             String sheetName = table.getName();
             final Sheet sheet = wb.getSheet(sheetName);
-            int datastoreIdColNo = table.getDatastoreIdColumn().getPosition();
+            int datastoreIdColNo = table.getSurrogateColumn(SurrogateColumnType.DATASTORE_ID).getPosition();
             Object key = IdentityUtils.getTargetKeyForDatastoreIdentity(op.getInternalObjectId());
             if (sheet != null)
             {
@@ -406,7 +407,7 @@ NucleusLogger.GENERAL.info(">> getRowNum type=" + cmd.getFullClassName() + " pkF
         {
             if (sheet != null && sheet.getPhysicalNumberOfRows() > 0)
             {
-                int datastoreIdColNumber = table.getDatastoreIdColumn().getPosition();
+                int datastoreIdColNumber = table.getSurrogateColumn(SurrogateColumnType.DATASTORE_ID).getPosition();
                 for (int i=sheet.getFirstRowNum(); i<sheet.getLastRowNum()+1; i++)
                 {
                     Row rrow = sheet.getRow(i);

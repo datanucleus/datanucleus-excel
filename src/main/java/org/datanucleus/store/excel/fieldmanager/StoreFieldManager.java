@@ -48,6 +48,7 @@ import org.datanucleus.metadata.RelationType;
 import org.datanucleus.state.ObjectProvider;
 import org.datanucleus.store.fieldmanager.AbstractStoreFieldManager;
 import org.datanucleus.store.schema.table.MemberColumnMapping;
+import org.datanucleus.store.schema.table.SurrogateColumnType;
 import org.datanucleus.store.schema.table.Table;
 import org.datanucleus.store.types.TypeManager;
 import org.datanucleus.store.types.converters.MultiColumnConverter;
@@ -106,7 +107,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
             }
             else if (op.getClassMetaData().getIdentityType() == IdentityType.DATASTORE)
             {
-                int datastoreIdColNumber = table.getDatastoreIdColumn().getPosition();
+                int datastoreIdColNumber = table.getSurrogateColumn(SurrogateColumnType.DATASTORE_ID).getPosition();
                 if (row.getCell(datastoreIdColNumber) == null)
                 {
                     row.createCell(datastoreIdColNumber);

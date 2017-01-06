@@ -39,6 +39,7 @@ import org.datanucleus.store.connection.ManagedConnection;
 import org.datanucleus.store.excel.ExcelStoreManager;
 import org.datanucleus.store.excel.fieldmanager.FetchFieldManager;
 import org.datanucleus.store.query.AbstractCandidateLazyLoadList;
+import org.datanucleus.store.schema.table.SurrogateColumnType;
 import org.datanucleus.store.schema.table.Table;
 
 /**
@@ -102,7 +103,7 @@ public class ExcelCandidateList extends AbstractCandidateLazyLoadList
                 }
                 else if (cmd.getIdentityType() == IdentityType.DATASTORE)
                 {
-                    idColIndex = table.getDatastoreIdColumn().getPosition();
+                    idColIndex = table.getSurrogateColumn(SurrogateColumnType.DATASTORE_ID).getPosition();
                 }
                 else
                 {
@@ -176,7 +177,7 @@ public class ExcelCandidateList extends AbstractCandidateLazyLoadList
                     }
                     else if (cmd.getIdentityType() == IdentityType.DATASTORE)
                     {
-                        idColIndex = table.getDatastoreIdColumn().getPosition();
+                        idColIndex = table.getSurrogateColumn(SurrogateColumnType.DATASTORE_ID).getPosition();
                     }
                     else
                     {

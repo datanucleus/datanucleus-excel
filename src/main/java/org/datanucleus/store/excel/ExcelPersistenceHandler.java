@@ -46,6 +46,7 @@ import org.datanucleus.store.excel.fieldmanager.FetchFieldManager;
 import org.datanucleus.store.excel.fieldmanager.StoreFieldManager;
 import org.datanucleus.store.fieldmanager.DeleteFieldManager;
 import org.datanucleus.store.schema.table.MemberColumnMapping;
+import org.datanucleus.store.schema.table.SurrogateColumnType;
 import org.datanucleus.store.schema.table.Table;
 import org.datanucleus.util.Localiser;
 import org.datanucleus.util.NucleusLogger;
@@ -166,7 +167,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
             if (cmd.getIdentityType() == IdentityType.DATASTORE)
             {
                 // Set the datastore identity column value
-                int idCellNum = table.getDatastoreIdColumn().getPosition();
+                int idCellNum = table.getSurrogateColumn(SurrogateColumnType.DATASTORE_ID).getPosition();
                 Object key = IdentityUtils.getTargetKeyForDatastoreIdentity(op.getInternalObjectId());
                 Cell idCell = row.getCell(idCellNum);
                 if (idCell == null)
@@ -200,7 +201,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                 }
                 else
                 {
-                    int verCellNum = table.getVersionColumn().getPosition();
+                    int verCellNum = table.getSurrogateColumn(SurrogateColumnType.VERSION).getPosition();
                     verCell = row.getCell(verCellNum);
                     if (verCell == null)
                     {
@@ -363,7 +364,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                 }
                 else
                 {
-                    verCell = row.getCell(table.getVersionColumn().getPosition());
+                    verCell = row.getCell(table.getSurrogateColumn(SurrogateColumnType.VERSION).getPosition());
                 }
                 if (nextVersion instanceof Long)
                 {
@@ -543,7 +544,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                 if (vermd.getFieldName() == null)
                 {
                     // Surrogate version
-                    verColNo = table.getVersionColumn().getPosition();
+                    verColNo = table.getSurrogateColumn(SurrogateColumnType.VERSION).getPosition();
                 }
                 else
                 {
