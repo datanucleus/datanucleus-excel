@@ -40,7 +40,6 @@ import org.datanucleus.metadata.VersionStrategy;
 import org.datanucleus.state.ObjectProvider;
 import org.datanucleus.store.AbstractPersistenceHandler;
 import org.datanucleus.store.StoreManager;
-import org.datanucleus.store.VersionHelper;
 import org.datanucleus.store.connection.ManagedConnection;
 import org.datanucleus.store.excel.fieldmanager.FetchFieldManager;
 import org.datanucleus.store.excel.fieldmanager.StoreFieldManager;
@@ -209,7 +208,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                     }
                 }
 
-                Object nextVersion = VersionHelper.getNextVersion(vermd.getVersionStrategy(), null);
+                Object nextVersion = ec.getNextVersion(vermd.getVersionStrategy(), null);
                 op.setTransactionalVersion(nextVersion);
                 if (nextVersion instanceof Long)
                 {
@@ -290,7 +289,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                 }
 
                 // Version object so calculate version to store with
-                nextVersion = VersionHelper.getNextVersion(vermd.getVersionStrategy(), currentVersion);
+                nextVersion = ec.getNextVersion(vermd.getVersionStrategy(), currentVersion);
                 if (vermd.getFieldName() != null)
                 {
                     // Version field
