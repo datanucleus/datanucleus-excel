@@ -86,7 +86,7 @@ public class ExcelUtils
             ExecutionContext ec = op.getExecutionContext();
             ClassLoaderResolver clr = ec.getClassLoaderResolver();
             int[] pkFieldNumbers = cmd.getPKMemberPositions();
-NucleusLogger.GENERAL.info(">> getRowNum type=" + cmd.getFullClassName() + " pkFieldNums=" + StringUtils.intArrayToString(pkFieldNumbers));
+
             List<Integer> pkFieldColList = new ArrayList(pkFieldNumbers.length);
             List pkFieldValList = new ArrayList(pkFieldNumbers.length);
             List<Class> pkFieldTypeList = new ArrayList(pkFieldNumbers.length);
