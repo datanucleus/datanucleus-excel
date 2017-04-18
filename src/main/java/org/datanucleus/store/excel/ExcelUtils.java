@@ -38,8 +38,6 @@ import org.datanucleus.store.schema.table.MemberColumnMapping;
 import org.datanucleus.store.schema.table.SurrogateColumnType;
 import org.datanucleus.store.schema.table.Table;
 import org.datanucleus.util.Localiser;
-import org.datanucleus.util.NucleusLogger;
-import org.datanucleus.util.StringUtils;
 
 /**
  * Class providing convenience methods for handling Excel datastores.
@@ -94,7 +92,6 @@ public class ExcelUtils
             {
                 Object fieldValue = op.provideField(pkFieldNumbers[i]);
                 AbstractMemberMetaData mmd = cmd.getMetaDataForManagedMemberAtAbsolutePosition(pkFieldNumbers[i]);
-                NucleusLogger.GENERAL.info(">> Field=" + mmd.getFullFieldName() + " value=" + fieldValue + " " + StringUtils.toJVMIDString(fieldValue));
                 RelationType relationType = mmd.getRelationType(clr);
                 if (RelationType.isRelationSingleValued(relationType) && mmd.isEmbedded())
                 {
