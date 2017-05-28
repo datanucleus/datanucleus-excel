@@ -208,7 +208,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                     }
                 }
 
-                Object nextVersion = ec.getNextVersion(vermd, null);
+                Object nextVersion = ec.getLockManager().getNextVersion(vermd, null);
                 op.setTransactionalVersion(nextVersion);
                 if (nextVersion instanceof Long)
                 {
@@ -289,7 +289,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                 }
 
                 // Version object so calculate version to store with
-                nextVersion = ec.getNextVersion(vermd, currentVersion);
+                nextVersion = ec.getLockManager().getNextVersion(vermd, currentVersion);
                 if (vermd.getFieldName() != null)
                 {
                     // Version field
