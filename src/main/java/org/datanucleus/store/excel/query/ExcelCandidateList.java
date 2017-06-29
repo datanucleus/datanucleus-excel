@@ -35,6 +35,7 @@ import org.datanucleus.metadata.AbstractMemberMetaData;
 import org.datanucleus.metadata.IdentityType;
 import org.datanucleus.state.ObjectProvider;
 import org.datanucleus.store.FieldValues;
+import org.datanucleus.store.StoreData;
 import org.datanucleus.store.connection.ManagedConnection;
 import org.datanucleus.store.excel.ExcelStoreManager;
 import org.datanucleus.store.excel.fieldmanager.FetchFieldManager;
@@ -82,12 +83,13 @@ public class ExcelCandidateList extends AbstractCandidateLazyLoadList
         {
             AbstractClassMetaData cmd = cmdIter.next();
 
-            if (!storeMgr.managesClass(cmd.getFullClassName()))
+            StoreData sd = storeMgr.getStoreDataForClass(cmd.getFullClassName());
+            if (sd == null)
             {
-                // Make sure schema exists, using this connection
                 storeMgr.manageClasses(new String[] {cmd.getFullClassName()}, ec.getClassLoaderResolver(), workbook);
+                sd = storeMgr.getStoreDataForClass(cmd.getFullClassName());
             }
-            Table table = ec.getStoreManager().getStoreDataForClass(cmd.getFullClassName()).getTable();
+            Table table = sd.getTable();
             String sheetName = table.getName();
             Sheet sheet = workbook.getSheet(sheetName);
             int size = 0;
