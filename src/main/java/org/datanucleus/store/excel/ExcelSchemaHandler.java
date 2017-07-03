@@ -56,7 +56,7 @@ public class ExcelSchemaHandler extends AbstractStoreSchemaHandler
         {
             if (wb == null)
             {
-                mconn = storeMgr.getConnection(-1);
+                mconn = storeMgr.getConnectionManager().getConnection(-1);
                 wb = (Workbook)mconn.getConnection();
             }
 
@@ -121,7 +121,7 @@ public class ExcelSchemaHandler extends AbstractStoreSchemaHandler
         {
             if (wb == null)
             {
-                mconn = storeMgr.getConnection(-1);
+                mconn = storeMgr.getConnectionManager().getConnection(-1);
                 wb = (Workbook)mconn.getConnection();
             }
 

@@ -93,7 +93,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
 
         AbstractClassMetaData cmd = op.getClassMetaData();
         ExecutionContext ec = op.getExecutionContext();
-        ManagedConnection mconn = storeMgr.getConnection(ec);
+        ManagedConnection mconn = storeMgr.getConnectionManager().getConnection(ec);
         try
         {
             long startTime = System.currentTimeMillis();
@@ -259,7 +259,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
         assertReadOnlyForUpdateOfObject(op);
 
         ExecutionContext ec = op.getExecutionContext();
-        ManagedConnection mconn = storeMgr.getConnection(ec);
+        ManagedConnection mconn = storeMgr.getConnectionManager().getConnection(ec);
         try
         {
             AbstractClassMetaData cmd = op.getClassMetaData();
@@ -408,7 +408,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
         assertReadOnlyForUpdateOfObject(op);
 
         ExecutionContext ec = op.getExecutionContext();
-        ManagedConnection mconn = storeMgr.getConnection(ec);
+        ManagedConnection mconn = storeMgr.getConnectionManager().getConnection(ec);
         try
         {
             AbstractClassMetaData cmd = op.getClassMetaData();
@@ -509,7 +509,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
         }
 
         ExecutionContext ec = op.getExecutionContext();
-        ManagedConnection mconn = storeMgr.getConnection(ec);
+        ManagedConnection mconn = storeMgr.getConnectionManager().getConnection(ec);
         try
         {
             Workbook wb = (Workbook) mconn.getConnection();
@@ -599,7 +599,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
     public void locateObject(ObjectProvider op)
     {
         ExecutionContext ec = op.getExecutionContext();
-        ManagedConnection mconn = storeMgr.getConnection(ec);
+        ManagedConnection mconn = storeMgr.getConnectionManager().getConnection(ec);
         try
         {
             Workbook wb = (Workbook) mconn.getConnection();

@@ -89,7 +89,7 @@ public abstract class ExcelStoreManager extends AbstractStoreManager implements 
             return;
         }
 
-        ManagedConnection mconn = getConnection(-1);
+        ManagedConnection mconn = connectionMgr.getConnection(-1);
         try
         {
             Workbook wb = (Workbook)mconn.getConnection();

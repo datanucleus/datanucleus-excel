@@ -82,7 +82,7 @@ public class JPQLQuery extends AbstractJPQLQuery
      */
     protected Object performExecute(Map parameters)
     {
-        ManagedConnection mconn = getStoreManager().getConnection(ec);
+        ManagedConnection mconn = getStoreManager().getConnectionManager().getConnection(ec);
         try
         {
             long startTime = 0;
