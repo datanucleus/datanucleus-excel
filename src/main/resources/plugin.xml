@@ -8,24 +8,11 @@
       <store-manager class-name="org.datanucleus.store.excel.OOXMLStoreManager" key="ooxml" url-key="ooxml"/>
    </extension>
 
-    <!-- QUERY LANGUAGES -->
-    <extension point="org.datanucleus.store_query_query">
-        <query class-name="org.datanucleus.store.excel.query.JDOQLQuery" datastore="xls" name="JDOQL"/>
-        <query class-name="org.datanucleus.store.excel.query.JPQLQuery" datastore="xls" name="JPQL"/>
-        <query class-name="org.datanucleus.store.excel.query.JDOQLQuery" datastore="excel" name="JDOQL"/>
-        <query class-name="org.datanucleus.store.excel.query.JPQLQuery" datastore="excel" name="JPQL"/>
-        <query class-name="org.datanucleus.store.excel.query.JDOQLQuery" datastore="ooxml" name="JDOQL"/>
-        <query class-name="org.datanucleus.store.excel.query.JPQLQuery" datastore="ooxml" name="JPQL"/>
-    </extension>
-
     <!-- CONNECTION FACTORY -->
     <extension point="org.datanucleus.store_connectionfactory">
-        <connectionfactory name="xls" class-name="org.datanucleus.store.excel.ConnectionFactoryImpl" 
-            transactional="true" datastore="xls"/>
-        <connectionfactory name="excel" class-name="org.datanucleus.store.excel.ConnectionFactoryImpl" 
-            transactional="true" datastore="excel"/>
-        <connectionfactory name="ooxml" class-name="org.datanucleus.store.excel.ConnectionFactoryImpl"
-            transactional="true" datastore="ooxml"/>
+        <connectionfactory name="xls" class-name="org.datanucleus.store.excel.ConnectionFactoryImpl" transactional="true" datastore="xls"/>
+        <connectionfactory name="excel" class-name="org.datanucleus.store.excel.ConnectionFactoryImpl" transactional="true" datastore="excel"/>
+        <connectionfactory name="ooxml" class-name="org.datanucleus.store.excel.ConnectionFactoryImpl" transactional="true" datastore="ooxml"/>
     </extension>
 
     <!-- VALUE GENERATORS -->
