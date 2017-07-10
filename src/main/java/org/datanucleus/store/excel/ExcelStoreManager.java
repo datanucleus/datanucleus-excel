@@ -93,11 +93,11 @@ public abstract class ExcelStoreManager extends AbstractStoreManager implements 
     @Override
     public Query newQuery(String language, ExecutionContext ec)
     {
-        if (language.equalsIgnoreCase("JDOQL"))
+        if (language.equalsIgnoreCase(Query.LANGUAGE_JDOQL))
         {
             return new JDOQLQuery(this, ec);
         }
-        else if (language.equalsIgnoreCase("JPQL"))
+        else if (language.equalsIgnoreCase(Query.LANGUAGE_JPQL))
         {
             return new JPQLQuery(this, ec);
         }
@@ -110,11 +110,11 @@ public abstract class ExcelStoreManager extends AbstractStoreManager implements 
     @Override
     public Query newQuery(String language, ExecutionContext ec, String queryString)
     {
-        if (language.equalsIgnoreCase("JDOQL"))
+        if (language.equalsIgnoreCase(Query.LANGUAGE_JDOQL))
         {
             return new JDOQLQuery(this, ec, queryString);
         }
-        else if (language.equalsIgnoreCase("JPQL"))
+        else if (language.equalsIgnoreCase(Query.LANGUAGE_JPQL))
         {
             return new JPQLQuery(this, ec, queryString);
         }
@@ -127,11 +127,11 @@ public abstract class ExcelStoreManager extends AbstractStoreManager implements 
     @Override
     public Query newQuery(String language, ExecutionContext ec, Query q)
     {
-        if (language.equalsIgnoreCase("JDOQL"))
+        if (language.equalsIgnoreCase(Query.LANGUAGE_JDOQL))
         {
             return new JDOQLQuery(this, ec, (JDOQLQuery) q);
         }
-        else if (language.equalsIgnoreCase("JPQL"))
+        else if (language.equalsIgnoreCase(Query.LANGUAGE_JPQL))
         {
             return new JPQLQuery(this, ec, (JPQLQuery) q);
         }
