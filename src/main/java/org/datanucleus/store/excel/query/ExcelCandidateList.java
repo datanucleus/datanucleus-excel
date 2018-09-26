@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -224,13 +225,12 @@ public class ExcelCandidateList extends AbstractCandidateLazyLoadList
                                     final FetchFieldManager fm = new FetchFieldManager(ec, cmd, worksheet, rowNumber, table);
                                     Object id = null;
                                     Cell idCell = row.getCell(idColIndex);
-                                    int type = idCell.getCellType();
-                                    if (type == Cell.CELL_TYPE_STRING)
+                                    if (idCell.getCellType() == CellType.STRING)
                                     {
                                         String key = idCell.getRichStringCellValue().getString();
                                         id = ec.getNucleusContext().getIdentityManager().getDatastoreId(cmd.getFullClassName(), key);
                                     }
-                                    else if (type == Cell.CELL_TYPE_NUMERIC)
+                                    else if (idCell.getCellType() == CellType.NUMERIC)
                                     {
                                         long key = (long)idCell.getNumericCellValue();
                                         id = ec.getNucleusContext().getIdentityManager().getDatastoreId(cmd.getFullClassName(), key);

@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.datanucleus.ClassLoaderResolver;
 import org.datanucleus.ExecutionContext;
@@ -116,7 +117,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
         {
             return 0;
         }
-        if (cell.getCellType() == Cell.CELL_TYPE_NUMERIC)
+        if (cell.getCellType() == CellType.NUMERIC)
         {
             // In case the char was interpreted as a numeric
             return (char)cell.getNumericCellValue();
@@ -804,12 +805,12 @@ public class FetchFieldManager extends AbstractFetchFieldManager
         }
 
         // Fallback to String/Long TypeConverters
-        if (cell.getCellType() == Cell.CELL_TYPE_NUMERIC)
+        if (cell.getCellType() == CellType.NUMERIC)
         {
             TypeConverter longConv = ec.getNucleusContext().getTypeManager().getTypeConverterForType(requiredType, Long.class);
             return longConv.toMemberType((long)cell.getNumericCellValue());
         }
-        else if (cell.getCellType() == Cell.CELL_TYPE_STRING)
+        else if (cell.getCellType() == CellType.STRING)
         {
             TypeConverter strConv = ec.getNucleusContext().getTypeManager().getTypeConverterForType(requiredType, String.class);
             String cellValue = (cell.getRichStringCellValue() != null ? cell.getRichStringCellValue().getString() : null);
