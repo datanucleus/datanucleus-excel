@@ -22,6 +22,7 @@ import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
@@ -54,7 +55,6 @@ import org.datanucleus.store.schema.table.Table;
 import org.datanucleus.store.types.SCOUtils;
 import org.datanucleus.store.types.converters.MultiColumnConverter;
 import org.datanucleus.store.types.converters.TypeConverter;
-import org.datanucleus.util.Base64;
 import org.datanucleus.util.NucleusLogger;
 import org.datanucleus.util.StringUtils;
 import org.datanucleus.util.TypeConversionHelper;
@@ -800,7 +800,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
             String value = cell.getStringCellValue();
             if (value != null)
             {
-                return Base64.decode(value);
+                return Base64.getDecoder().decode(value);
             }
         }
 

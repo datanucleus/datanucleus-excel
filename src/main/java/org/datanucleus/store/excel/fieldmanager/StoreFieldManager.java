@@ -22,6 +22,7 @@ package org.datanucleus.store.excel.fieldmanager;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
@@ -53,7 +54,6 @@ import org.datanucleus.store.schema.table.Table;
 import org.datanucleus.store.types.TypeManager;
 import org.datanucleus.store.types.converters.MultiColumnConverter;
 import org.datanucleus.store.types.converters.TypeConverter;
-import org.datanucleus.util.Base64;
 import org.datanucleus.util.ClassUtils;
 import org.datanucleus.util.Localiser;
 import org.datanucleus.util.NucleusLogger;
@@ -615,7 +615,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         }
         else if (byte[].class == type)
         {
-            String strValue = new String(Base64.encode((byte[]) value));
+            String strValue = new String(Base64.getEncoder().encode((byte[]) value));
             cell.setCellValue(strValue);
         }
         // TODO Persist Collection of String as comma-separated?
