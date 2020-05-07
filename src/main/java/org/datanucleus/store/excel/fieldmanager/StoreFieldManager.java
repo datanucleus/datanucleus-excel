@@ -615,7 +615,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         }
         else if (byte[].class == type)
         {
-            String strValue = new String(Base64.getEncoder().encode((byte[]) value));
+            String strValue = Base64.getEncoder().encodeToString((byte[]) value);
             cell.setCellValue(strValue);
         }
         // TODO Persist Collection of String as comma-separated?
