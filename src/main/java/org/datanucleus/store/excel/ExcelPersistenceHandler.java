@@ -441,7 +441,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
             int rowId = ExcelUtils.getRowNumberForObjectInWorkbook(op, wb, false, table);
             if (rowId < 0)
             {
-                throw new NucleusObjectNotFoundException("object not found", op.getObject());
+                throw new NucleusObjectNotFoundException("Object not found for id " + IdentityUtils.getPersistableIdentityForId(op.getInternalObjectId()), op.getObject());
             }
 
             if (storeMgr instanceof XLSStoreManager && sheet.getLastRowNum() == rowId)
@@ -531,7 +531,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
             int rowNumber = ExcelUtils.getRowNumberForObjectInWorkbook(op, wb, false, table);
             if (rowNumber < 0)
             {
-                throw new NucleusObjectNotFoundException("object not found", op.getObject());
+                throw new NucleusObjectNotFoundException("Object not found for id " + IdentityUtils.getPersistableIdentityForId(op.getInternalObjectId()), op.getObject());
             }
             op.replaceFields(fieldNumbers, new FetchFieldManager(op, sheet, rowNumber, table));
 
