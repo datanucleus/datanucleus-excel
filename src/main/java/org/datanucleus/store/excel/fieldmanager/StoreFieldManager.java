@@ -52,12 +52,12 @@ import org.datanucleus.store.schema.table.MemberColumnMapping;
 import org.datanucleus.store.schema.table.SurrogateColumnType;
 import org.datanucleus.store.schema.table.Table;
 import org.datanucleus.store.types.TypeManager;
+import org.datanucleus.store.types.converters.EnumConversionHelper;
 import org.datanucleus.store.types.converters.MultiColumnConverter;
 import org.datanucleus.store.types.converters.TypeConverter;
 import org.datanucleus.util.ClassUtils;
 import org.datanucleus.util.Localiser;
 import org.datanucleus.util.NucleusLogger;
-import org.datanucleus.util.TypeConversionHelper;
 
 /**
  * FieldManager to handle the store information into an Excel worksheet row using an object.
@@ -603,7 +603,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         }
         else if (Enum.class.isAssignableFrom(type))
         {
-            Object datastoreValue = TypeConversionHelper.getStoredValueFromEnum(mmd, FieldRole.ROLE_FIELD, (Enum) value);
+            Object datastoreValue = EnumConversionHelper.getStoredValueFromEnum(mmd, FieldRole.ROLE_FIELD, (Enum) value);
             if (datastoreValue instanceof Number)
             {
                 cell.setCellValue(((Number)datastoreValue).doubleValue());
