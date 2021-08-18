@@ -11,7 +11,7 @@ KeyFacts
 --------
 __License__ : Apache 2 licensed  
 __Issue Tracker__ : http://github.com/datanucleus/datanucleus-excel/issues  
-__Javadocs__ : [5.2](http://www.datanucleus.org/javadocs/store.excel/5.2/), [5.1](http://www.datanucleus.org/javadocs/store.excel/5.1/), [5.0](http://www.datanucleus.org/javadocs/store.excel/5.0/), [4.1](http://www.datanucleus.org/javadocs/store.excel/4.1/), [4.0](http://www.datanucleus.org/javadocs/store.excel/4.0/)  
+__Javadocs__ : [6.0](http://www.datanucleus.org/javadocs/store.excel/6.0/), [5.2](http://www.datanucleus.org/javadocs/store.excel/5.2/), [5.1](http://www.datanucleus.org/javadocs/store.excel/5.1/), [5.0](http://www.datanucleus.org/javadocs/store.excel/5.0/), [4.1](http://www.datanucleus.org/javadocs/store.excel/4.1/), [4.0](http://www.datanucleus.org/javadocs/store.excel/4.0/)  
 __Download__ : [Maven Central](https://repo1.maven.org/maven2/org/datanucleus/datanucleus-excel)  
 __Dependencies__ : See file [pom.xml](pom.xml)  
 __Support__ : [DataNucleus Support Page](http://www.datanucleus.org/support.html)  
