@@ -250,7 +250,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
 
     /**
      * Method to handle the update of fields of an object in the datastore.
-     * @param op Object Provider for the object
+     * @param op StateManager for the object
      * @param fieldNumbers Absolute numbers of fields to be updated
      */
     public void updateObject(final ObjectProvider op, int[] fieldNumbers)
@@ -398,7 +398,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
 
     /**
      * Deletes a persistent object from the database.
-     * @param op The Object Provider of the object to be deleted.
+     * @param op The StateManager of the object to be deleted.
      * @throws NucleusDataStoreException when an error occurs in the datastore communication
      * @throws NucleusOptimisticException thrown if version checking fails on an optimistic transaction for this object
      */
