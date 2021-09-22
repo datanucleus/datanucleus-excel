@@ -84,7 +84,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
 
     /**
      * Method to insert the object into the datastore.
-     * @param op ObjectProvider of the object
+     * @param op StateManager of the object
      */
     public void insertObject(final ObjectProvider op)
     {
@@ -594,7 +594,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
     /**
      * Method to locate if an object exists in the datastore.
      * Goes through the rows in the worksheet and finds a row with the required identity.
-     * @param op ObjectProvider of object to locate
+     * @param op StateManager of object to locate
      */
     public void locateObject(ObjectProvider op)
     {

@@ -49,7 +49,7 @@ public class ExcelUtils
 
     /**
      * Convenience method to return the worksheet used for storing the specified object.
-     * @param op ObjectProvider for the object
+     * @param op StateManager for the object
      * @param wb Workbook
      * @param table The table representing this worksheet
      * @return The Work Sheet
@@ -70,7 +70,7 @@ public class ExcelUtils
      * Convenience method to find the row number of an object in the provided workbook.
      * For application-identity does a search for a row with the specified PK field values.
      * For datastore-identity does a search for the row with the datastore column having the specified value
-     * @param op ObjectProvider for the object
+     * @param op StateManager for the object
      * @param wb Workbook
      * @param originalValue Use the original value of the identifiying fields if available (for when we are updating and using nondurable identity).
      * @param table The table representing this worksheet
@@ -352,7 +352,7 @@ public class ExcelUtils
      * This takes into account the fact that it seems to be impossible (with Apache POI 3.0.2)
      * to delete rows from a sheet. Consequently what we do is leave the row but delete
      * all cells. When returning the number of rows this ignores rows that have no cells.
-     * @param op ObjectProvider for the object
+     * @param op StateManager for the object
      * @param wb Workbook
      * @return Number of (active) rows (or 0 if no active rows)
      */
