@@ -222,7 +222,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
     public void storeObjectField(int fieldNumber, Object value)
     {
         ClassLoaderResolver clr = ec.getClassLoaderResolver();
-        AbstractMemberMetaData mmd = op.getClassMetaData().getMetaDataForManagedMemberAtAbsolutePosition(fieldNumber);
+        AbstractMemberMetaData mmd = sm.getClassMetaData().getMetaDataForManagedMemberAtAbsolutePosition(fieldNumber);
         if (!isStorable(mmd))
         {
             return;
@@ -278,7 +278,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                     return;
                 }
 
-                ObjectProvider embSM = ec.findObjectProviderForEmbedded(value, op, mmd);
+                ObjectProvider embSM = ec.findObjectProviderForEmbedded(value, sm, mmd);
                 StoreEmbeddedFieldManager storeEmbFM = new StoreEmbeddedFieldManager(embSM, row, insert, embMmds, table);
                 embSM.provideFields(embMmdPosns, storeEmbFM);
                 return;
@@ -453,7 +453,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                 return;
             }
 
-            Object valuePC = ec.persistObjectInternal(value, op, fieldNumber, -1);
+            Object valuePC = ec.persistObjectInternal(value, sm, fieldNumber, -1);
             Object valueId = ec.getApiAdapter().getIdForObject(valuePC);
             CreationHelper createHelper = row.getSheet().getWorkbook().getCreationHelper();
             cell.setCellValue(createHelper.createRichTextString("[" + IdentityUtils.getPersistableIdentityForId(valueId) + "]"));
@@ -496,7 +496,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                 while (collIter.hasNext())
                 {
                     Object element = collIter.next();
-                    Object elementPC = ec.persistObjectInternal(element, op, fieldNumber, -1);
+                    Object elementPC = ec.persistObjectInternal(element, sm, fieldNumber, -1);
                     Object elementID = ec.getApiAdapter().getIdForObject(elementPC);
                     cellValue.append(IdentityUtils.getPersistableIdentityForId(elementID));
                     if (collIter.hasNext())
@@ -522,7 +522,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                     cellValue.append("[");
                     if (keyCmd != null)
                     {
-                        Object keyPC = ec.persistObjectInternal(entry.getKey(), op, fieldNumber, -1);
+                        Object keyPC = ec.persistObjectInternal(entry.getKey(), sm, fieldNumber, -1);
                         Object keyID = ec.getApiAdapter().getIdForObject(keyPC);
                         cellValue.append(IdentityUtils.getPersistableIdentityForId(keyID));
                     }
@@ -533,7 +533,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                     cellValue.append("],[");
                     if (valCmd != null)
                     {
-                        Object valPC = ec.persistObjectInternal(entry.getValue(), op, fieldNumber, -1);
+                        Object valPC = ec.persistObjectInternal(entry.getValue(), sm, fieldNumber, -1);
                         Object valID = ec.getApiAdapter().getIdForObject(valPC);
                         cellValue.append(IdentityUtils.getPersistableIdentityForId(valID));
                     }
@@ -557,7 +557,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                 for (int i=0;i<Array.getLength(value);i++)
                 {
                     Object element = Array.get(value, i);
-                    Object elementPC = ec.persistObjectInternal(element, op, fieldNumber, -1);
+                    Object elementPC = ec.persistObjectInternal(element, sm, fieldNumber, -1);
                     Object elementID = ec.getApiAdapter().getIdForObject(elementPC);
                     cellValue.append(IdentityUtils.getPersistableIdentityForId(elementID));
                     if (i < (Array.getLength(value)-1))

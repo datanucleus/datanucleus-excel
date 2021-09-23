@@ -71,7 +71,7 @@ public class FetchEmbeddedFieldManager extends FetchFieldManager
         if (mmds.size() == 1 && embmd != null && embmd.getOwnerMember() != null && embmd.getOwnerMember().equals(mmd.getName()))
         {
             // Special case of this being a link back to the owner. TODO Repeat this for nested and their owners
-            ObjectProvider[] ownerOps = ec.getOwnersForEmbeddedObjectProvider(op);
+            ObjectProvider[] ownerOps = ec.getOwnersForEmbeddedObjectProvider(sm);
             return (ownerOps != null && ownerOps.length > 0 ? ownerOps[0].getObject() : null);
         }
 
@@ -84,7 +84,7 @@ public class FetchEmbeddedFieldManager extends FetchFieldManager
                 List<AbstractMemberMetaData> embMmds = new ArrayList<AbstractMemberMetaData>(mmds);
                 embMmds.add(mmd);
                 AbstractClassMetaData embCmd = ec.getMetaDataManager().getMetaDataForClass(mmd.getType(), clr);
-                ObjectProvider embOP = ec.getNucleusContext().getObjectProviderFactory().newForEmbedded(ec, embCmd, op, fieldNumber);
+                ObjectProvider embOP = ec.getNucleusContext().getObjectProviderFactory().newForEmbedded(ec, embCmd, sm, fieldNumber);
                 FieldManager fetchEmbFM = new FetchEmbeddedFieldManager(embOP, sheet, rowNumber, embMmds, table);
                 embOP.replaceFields(embCmd.getAllMemberPositions(), fetchEmbFM);
                 return embOP.getObject();
