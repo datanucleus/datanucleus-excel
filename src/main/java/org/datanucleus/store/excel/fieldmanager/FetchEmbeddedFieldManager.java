@@ -49,9 +49,9 @@ public class FetchEmbeddedFieldManager extends FetchFieldManager
         this.mmds = mmds;
     }
 
-    public FetchEmbeddedFieldManager(ObjectProvider op, Sheet sheet, int row, List<AbstractMemberMetaData> mmds, Table table)
+    public FetchEmbeddedFieldManager(ObjectProvider sm, Sheet sheet, int row, List<AbstractMemberMetaData> mmds, Table table)
     {
-        super(op, sheet, row, table);
+        super(sm, sheet, row, table);
         this.mmds = mmds;
     }
 

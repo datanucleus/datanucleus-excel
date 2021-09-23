@@ -49,19 +49,19 @@ public class ExcelUtils
 
     /**
      * Convenience method to return the worksheet used for storing the specified object.
-     * @param op StateManager for the object
+     * @param sm StateManager for the object
      * @param wb Workbook
      * @param table The table representing this worksheet
      * @return The Work Sheet
      * @throws NucleusDataStoreException if the work sheet doesn't exist in this workbook
      */
-    public static Sheet getSheetForClass(ObjectProvider op, Workbook wb, Table table)
+    public static Sheet getSheetForClass(ObjectProvider sm, Workbook wb, Table table)
     {
         String sheetName = table.getName();
         final Sheet sheet = wb.getSheet(sheetName);
         if (sheet == null)
         {
-            throw new NucleusDataStoreException(Localiser.msg("Excel.SheetNotFoundForWorkbook", sheetName, op.getObjectAsPrintable()));
+            throw new NucleusDataStoreException(Localiser.msg("Excel.SheetNotFoundForWorkbook", sheetName, sm.getObjectAsPrintable()));
         }
         return sheet;
     }
@@ -70,18 +70,18 @@ public class ExcelUtils
      * Convenience method to find the row number of an object in the provided workbook.
      * For application-identity does a search for a row with the specified PK field values.
      * For datastore-identity does a search for the row with the datastore column having the specified value
-     * @param op StateManager for the object
+     * @param sm StateManager for the object
      * @param wb Workbook
      * @param originalValue Use the original value of the identifiying fields if available (for when we are updating and using nondurable identity).
      * @param table The table representing this worksheet
      * @return The row number (or -1 if not found)
      */
-    public static int getRowNumberForObjectInWorkbook(ObjectProvider op, Workbook wb, boolean originalValue, Table table)
+    public static int getRowNumberForObjectInWorkbook(ObjectProvider sm, Workbook wb, boolean originalValue, Table table)
     {
-        final AbstractClassMetaData cmd = op.getClassMetaData();
+        final AbstractClassMetaData cmd = sm.getClassMetaData();
         if (cmd.getIdentityType() == IdentityType.APPLICATION)
         {
-            ExecutionContext ec = op.getExecutionContext();
+            ExecutionContext ec = sm.getExecutionContext();
             ClassLoaderResolver clr = ec.getClassLoaderResolver();
             int[] pkFieldNumbers = cmd.getPKMemberPositions();
 
@@ -90,16 +90,16 @@ public class ExcelUtils
             List<Class> pkFieldTypeList = new ArrayList(pkFieldNumbers.length);
             for (int i=0;i<pkFieldNumbers.length;i++)
             {
-                Object fieldValue = op.provideField(pkFieldNumbers[i]);
+                Object fieldValue = sm.provideField(pkFieldNumbers[i]);
                 AbstractMemberMetaData mmd = cmd.getMetaDataForManagedMemberAtAbsolutePosition(pkFieldNumbers[i]);
                 RelationType relationType = mmd.getRelationType(clr);
                 if (RelationType.isRelationSingleValued(relationType) && mmd.isEmbedded())
                 {
                     // Embedded PC is part of PK (e.g JPA EmbeddedId)
-                    ObjectProvider embOP = ec.findObjectProvider(fieldValue);
-                    if (embOP == null)
+                    ObjectProvider embSM = ec.findObjectProvider(fieldValue);
+                    if (embSM == null)
                     {
-                        embOP = ec.getNucleusContext().getObjectProviderFactory().newForEmbedded(ec, fieldValue, false, op, pkFieldNumbers[i]);
+                        embSM = ec.getNucleusContext().getObjectProviderFactory().newForEmbedded(ec, fieldValue, false, sm, pkFieldNumbers[i]);
                     }
                     AbstractClassMetaData embCmd = ec.getMetaDataManager().getMetaDataForClass(mmd.getType(), clr);
                     for (int j=0;j<embCmd.getNoOfManagedMembers();j++)
@@ -113,12 +113,12 @@ public class ExcelUtils
                         pkFieldColList.add(mapping.getColumn(0).getPosition());
                         if (mapping.getTypeConverter() != null)
                         {
-                            pkFieldValList.add(mapping.getTypeConverter().toDatastoreType(embOP.provideField(j)));
+                            pkFieldValList.add(mapping.getTypeConverter().toDatastoreType(embSM.provideField(j)));
                             pkFieldTypeList.add(ec.getTypeManager().getDatastoreTypeForTypeConverter(mapping.getTypeConverter(), embMmd.getType()));
                         }
                         else
                         {
-                            pkFieldValList.add(embOP.provideField(j));
+                            pkFieldValList.add(embSM.provideField(j));
                             pkFieldTypeList.add(embMmd.getType());
                         }
                     }
@@ -177,7 +177,7 @@ public class ExcelUtils
             String sheetName = table.getName();
             final Sheet sheet = wb.getSheet(sheetName);
             int datastoreIdColNo = table.getSurrogateColumn(SurrogateColumnType.DATASTORE_ID).getPosition();
-            Object key = IdentityUtils.getTargetKeyForDatastoreIdentity(op.getInternalObjectId());
+            Object key = IdentityUtils.getTargetKeyForDatastoreIdentity(sm.getInternalObjectId());
             if (sheet != null)
             {
                 for (int i=0; i<sheet.getLastRowNum()+1; i++)
@@ -197,7 +197,7 @@ public class ExcelUtils
         else
         {
             // Nondurable, so compare all applicable fields
-            ExecutionContext ec = op.getExecutionContext();
+            ExecutionContext ec = sm.getExecutionContext();
             ClassLoaderResolver clr = ec.getClassLoaderResolver();
             int[] fieldNumbers = cmd.getAllMemberPositions();
 
@@ -211,29 +211,29 @@ public class ExcelUtils
                 Object fieldValue = null;
                 if (originalValue)
                 {
-                    Object oldValue = op.getAssociatedValue(ObjectProvider.ORIGINAL_FIELD_VALUE_KEY_PREFIX + fieldNumbers[i]);
+                    Object oldValue = sm.getAssociatedValue(ObjectProvider.ORIGINAL_FIELD_VALUE_KEY_PREFIX + fieldNumbers[i]);
                     if (oldValue != null)
                     {
                         fieldValue = oldValue;
                     }
                     else
                     {
-                        fieldValue = op.provideField(fieldNumbers[i]);
+                        fieldValue = sm.provideField(fieldNumbers[i]);
                     }
                 }
                 else
                 {
-                    fieldValue = op.provideField(fieldNumbers[i]);
+                    fieldValue = sm.provideField(fieldNumbers[i]);
                 }
                 if (RelationType.isRelationSingleValued(relationType) && mmd.isEmbedded())
                 {
                     // Embedded PC is part of PK (e.g JPA EmbeddedId)
-                    ObjectProvider embOP = ec.findObjectProvider(fieldValue);
-                    if (embOP == null)
+                    ObjectProvider embSM = ec.findObjectProvider(fieldValue);
+                    if (embSM == null)
                     {
-                        embOP = ec.getNucleusContext().getObjectProviderFactory().newForEmbedded(ec, fieldValue, false, op, fieldNumbers[i]);
+                        embSM = ec.getNucleusContext().getObjectProviderFactory().newForEmbedded(ec, fieldValue, false, sm, fieldNumbers[i]);
                     }
-                    AbstractClassMetaData embCmd = op.getExecutionContext().getMetaDataManager().getMetaDataForClass(mmd.getType(), clr);
+                    AbstractClassMetaData embCmd = sm.getExecutionContext().getMetaDataManager().getMetaDataForClass(mmd.getType(), clr);
                     for (int j=0;j<embCmd.getNoOfManagedMembers();j++)
                     {
                         // TODO Support nested embedded
@@ -243,7 +243,7 @@ public class ExcelUtils
                         embMmds.add(embMmd);
                         fieldColList.add(table.getMemberColumnMappingForEmbeddedMember(embMmds).getColumn(0).getPosition());
                         fieldTypeList.add(embMmd.getType());
-                        fieldValList.add(embOP.provideField(j));
+                        fieldValList.add(embSM.provideField(j));
                     }
                 }
                 else if (relationType == RelationType.NONE)
@@ -352,16 +352,16 @@ public class ExcelUtils
      * This takes into account the fact that it seems to be impossible (with Apache POI 3.0.2)
      * to delete rows from a sheet. Consequently what we do is leave the row but delete
      * all cells. When returning the number of rows this ignores rows that have no cells.
-     * @param op StateManager for the object
+     * @param sm StateManager for the object
      * @param wb Workbook
      * @return Number of (active) rows (or 0 if no active rows)
      */
-    public static int getNumberOfRowsInSheetOfWorkbook(ObjectProvider op, Workbook wb)
+    public static int getNumberOfRowsInSheetOfWorkbook(ObjectProvider sm, Workbook wb)
     {
         int numRows = 0;
 
-        final AbstractClassMetaData cmd = op.getClassMetaData();
-        Table table = op.getExecutionContext().getStoreManager().getStoreDataForClass(op.getClassMetaData().getFullClassName()).getTable();
+        final AbstractClassMetaData cmd = sm.getClassMetaData();
+        Table table = sm.getExecutionContext().getStoreManager().getStoreDataForClass(sm.getClassMetaData().getFullClassName()).getTable();
         String sheetName = table.getName();
         final Sheet sheet = wb.getSheet(sheetName);
         if (cmd.getIdentityType() == IdentityType.APPLICATION)
@@ -370,7 +370,7 @@ public class ExcelUtils
             Object[] pkFieldValues = new Object[pkFieldNumbers.length];
             for (int i=0;i<pkFieldNumbers.length;i++)
             {
-                pkFieldValues[i] = op.provideField(pkFieldNumbers[i]);
+                pkFieldValues[i] = sm.provideField(pkFieldNumbers[i]);
             }
 
             if (sheet != null && sheet.getPhysicalNumberOfRows() > 0)

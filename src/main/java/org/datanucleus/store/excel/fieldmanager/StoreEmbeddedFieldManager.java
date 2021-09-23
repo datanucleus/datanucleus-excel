@@ -47,9 +47,9 @@ public class StoreEmbeddedFieldManager extends StoreFieldManager
         this.mmds = mmds;
     }
 
-    public StoreEmbeddedFieldManager(ObjectProvider op, Row row, boolean insert, List<AbstractMemberMetaData> mmds, Table table)
+    public StoreEmbeddedFieldManager(ObjectProvider sm, Row row, boolean insert, List<AbstractMemberMetaData> mmds, Table table)
     {
-        super(op, row, insert, table);
+        super(sm, row, insert, table);
         this.mmds = mmds;
     }
 
@@ -76,11 +76,11 @@ public class StoreEmbeddedFieldManager extends StoreFieldManager
             // Special case of this member being a link back to the owner. TODO Repeat this for nested and their owners
             if (op != null)
             {
-                ObjectProvider[] ownerOPs = ec.getOwnersForEmbeddedObjectProvider(op);
-                if (ownerOPs != null && ownerOPs.length == 1 && value != ownerOPs[0].getObject())
+                ObjectProvider[] ownerSMs = ec.getOwnersForEmbeddedObjectProvider(op);
+                if (ownerSMs != null && ownerSMs.length == 1 && value != ownerSMs[0].getObject())
                 {
                     // Make sure the owner field is set
-                    op.replaceField(fieldNumber, ownerOPs[0].getObject());
+                    op.replaceField(fieldNumber, ownerSMs[0].getObject());
                 }
             }
             return;

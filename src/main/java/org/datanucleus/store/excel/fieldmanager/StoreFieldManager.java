@@ -74,16 +74,16 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         this.table = table;
     }
 
-    public StoreFieldManager(ObjectProvider op, Row row, boolean insert, Table table)
+    public StoreFieldManager(ObjectProvider sm, Row row, boolean insert, Table table)
     {
-        super(op, insert);
+        super(sm, insert);
         this.row = row;
         this.table = table;
 
-        if (!op.isEmbedded())
+        if (!sm.isEmbedded())
         {
             // Add PK field(s) cell, so that the row is detected by ExcelUtils.getNumberOfRowsInSheetOfWorkbook
-            AbstractClassMetaData cmd = op.getClassMetaData();
+            AbstractClassMetaData cmd = sm.getClassMetaData();
             if (cmd.getIdentityType() == IdentityType.APPLICATION)
             {
                 int[] pkFieldNumbers = cmd.getPKMemberPositions();
@@ -105,7 +105,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                     }
                 }
             }
-            else if (op.getClassMetaData().getIdentityType() == IdentityType.DATASTORE)
+            else if (sm.getClassMetaData().getIdentityType() == IdentityType.DATASTORE)
             {
                 int datastoreIdColNumber = table.getSurrogateColumn(SurrogateColumnType.DATASTORE_ID).getPosition();
                 if (row.getCell(datastoreIdColNumber) == null)
@@ -278,9 +278,9 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                     return;
                 }
 
-                ObjectProvider embOP = ec.findObjectProviderForEmbedded(value, op, mmd);
-                StoreEmbeddedFieldManager storeEmbFM = new StoreEmbeddedFieldManager(embOP, row, insert, embMmds, table);
-                embOP.provideFields(embMmdPosns, storeEmbFM);
+                ObjectProvider embSM = ec.findObjectProviderForEmbedded(value, op, mmd);
+                StoreEmbeddedFieldManager storeEmbFM = new StoreEmbeddedFieldManager(embSM, row, insert, embMmds, table);
+                embSM.provideFields(embMmdPosns, storeEmbFM);
                 return;
             }
             else if (RelationType.isRelationMultiValued(relationType))

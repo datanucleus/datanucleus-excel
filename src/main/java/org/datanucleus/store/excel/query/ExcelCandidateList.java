@@ -206,9 +206,9 @@ public class ExcelCandidateList extends AbstractCandidateLazyLoadList
                                     return ec.findObject(id, new FieldValues()
                                     {
                                         // ObjectProvider calls the fetchFields method
-                                        public void fetchFields(ObjectProvider op)
+                                        public void fetchFields(ObjectProvider sm)
                                         {
-                                            op.replaceFields(fpFieldNums, fm);
+                                            sm.replaceFields(fpFieldNums, fm);
                                         }
                                         public void fetchNonLoadedFields(ObjectProvider sm)
                                         {
@@ -238,13 +238,13 @@ public class ExcelCandidateList extends AbstractCandidateLazyLoadList
                                     return ec.findObject(id, new FieldValues()
                                     {
                                         // ObjectProvider calls the fetchFields method
-                                        public void fetchFields(ObjectProvider op)
+                                        public void fetchFields(ObjectProvider sm)
                                         {
-                                            op.replaceFields(fpFieldNums, fm);
+                                            sm.replaceFields(fpFieldNums, fm);
                                         }
-                                        public void fetchNonLoadedFields(ObjectProvider op)
+                                        public void fetchNonLoadedFields(ObjectProvider sm)
                                         {
-                                            op.replaceNonLoadedFields(fpFieldNums, fm);
+                                            sm.replaceNonLoadedFields(fpFieldNums, fm);
                                         }
                                         public FetchPlan getFetchPlanForLoading()
                                         {
@@ -260,9 +260,9 @@ public class ExcelCandidateList extends AbstractCandidateLazyLoadList
                                     return ec.findObject(id, new FieldValues()
                                     {
                                         // ObjectProvider calls the fetchFields method
-                                        public void fetchFields(ObjectProvider op)
+                                        public void fetchFields(ObjectProvider sm)
                                         {
-                                            op.replaceFields(fpFieldNums, fm);
+                                            sm.replaceFields(fpFieldNums, fm);
                                         }
                                         public void fetchNonLoadedFields(ObjectProvider sm)
                                         {

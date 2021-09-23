@@ -68,9 +68,9 @@ public class FetchFieldManager extends AbstractFetchFieldManager
     protected Sheet sheet;
     protected int rowNumber;
 
-    public FetchFieldManager(ObjectProvider op, Sheet sheet, int row, Table table)
+    public FetchFieldManager(ObjectProvider sm, Sheet sheet, int row, Table table)
     {
-        super(op);
+        super(sm);
         this.table = table;
         this.rowNumber = row;
         this.sheet = sheet;
@@ -200,10 +200,10 @@ public class FetchFieldManager extends AbstractFetchFieldManager
                 List<AbstractMemberMetaData> embMmds = new ArrayList<AbstractMemberMetaData>();
                 embMmds.add(mmd);
                 AbstractClassMetaData embCmd = ec.getMetaDataManager().getMetaDataForClass(mmd.getType(), clr);
-                ObjectProvider embOP = ec.getNucleusContext().getObjectProviderFactory().newForEmbedded(ec, embCmd, op, fieldNumber);
-                FieldManager fetchEmbFM = new FetchEmbeddedFieldManager(embOP, sheet, rowNumber, embMmds, table);
-                embOP.replaceFields(embCmd.getAllMemberPositions(), fetchEmbFM);
-                return embOP.getObject();
+                ObjectProvider embSM = ec.getNucleusContext().getObjectProviderFactory().newForEmbedded(ec, embCmd, op, fieldNumber);
+                FieldManager fetchEmbFM = new FetchEmbeddedFieldManager(embSM, sheet, rowNumber, embMmds, table);
+                embSM.replaceFields(embCmd.getAllMemberPositions(), fetchEmbFM);
+                return embSM.getObject();
             }
             else if (RelationType.isRelationMultiValued(relationType))
             {
