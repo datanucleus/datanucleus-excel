@@ -483,7 +483,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
 
     /**
      * Fetches fields of a persistent object from the database.
-     * @param sm The ObjectProvider of the object to be fetched.
+     * @param sm StateManager of the object to be fetched.
      * @param fieldNumbers The numbers of the fields to be fetched.
      * @throws NucleusDataStoreException when an error occurs in the datastore communication
      */
