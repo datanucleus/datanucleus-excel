@@ -34,7 +34,7 @@ import org.datanucleus.identity.SCOID;
 import org.datanucleus.metadata.AbstractClassMetaData;
 import org.datanucleus.metadata.AbstractMemberMetaData;
 import org.datanucleus.metadata.IdentityType;
-import org.datanucleus.state.ObjectProvider;
+import org.datanucleus.state.DNStateManager;
 import org.datanucleus.store.FieldValues;
 import org.datanucleus.store.StoreData;
 import org.datanucleus.store.connection.ManagedConnection;
@@ -205,12 +205,12 @@ public class ExcelCandidateList extends AbstractCandidateLazyLoadList
 
                                     return ec.findObject(id, new FieldValues()
                                     {
-                                        // ObjectProvider calls the fetchFields method
-                                        public void fetchFields(ObjectProvider sm)
+                                        // StateManager calls the fetchFields method
+                                        public void fetchFields(DNStateManager sm)
                                         {
                                             sm.replaceFields(fpFieldNums, fm);
                                         }
-                                        public void fetchNonLoadedFields(ObjectProvider sm)
+                                        public void fetchNonLoadedFields(DNStateManager sm)
                                         {
                                             sm.replaceNonLoadedFields(fpFieldNums, fm);
                                         }
@@ -237,12 +237,12 @@ public class ExcelCandidateList extends AbstractCandidateLazyLoadList
                                     }
                                     return ec.findObject(id, new FieldValues()
                                     {
-                                        // ObjectProvider calls the fetchFields method
-                                        public void fetchFields(ObjectProvider sm)
+                                        // StateManager calls the fetchFields method
+                                        public void fetchFields(DNStateManager sm)
                                         {
                                             sm.replaceFields(fpFieldNums, fm);
                                         }
-                                        public void fetchNonLoadedFields(ObjectProvider sm)
+                                        public void fetchNonLoadedFields(DNStateManager sm)
                                         {
                                             sm.replaceNonLoadedFields(fpFieldNums, fm);
                                         }
@@ -259,12 +259,12 @@ public class ExcelCandidateList extends AbstractCandidateLazyLoadList
                                     Object id = new SCOID(cmd.getFullClassName());
                                     return ec.findObject(id, new FieldValues()
                                     {
-                                        // ObjectProvider calls the fetchFields method
-                                        public void fetchFields(ObjectProvider sm)
+                                        // StateManager calls the fetchFields method
+                                        public void fetchFields(DNStateManager sm)
                                         {
                                             sm.replaceFields(fpFieldNums, fm);
                                         }
-                                        public void fetchNonLoadedFields(ObjectProvider sm)
+                                        public void fetchNonLoadedFields(DNStateManager sm)
                                         {
                                             sm.replaceNonLoadedFields(fpFieldNums, fm);
                                         }

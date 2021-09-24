@@ -33,7 +33,7 @@ import org.datanucleus.metadata.AbstractClassMetaData;
 import org.datanucleus.metadata.AbstractMemberMetaData;
 import org.datanucleus.metadata.IdentityType;
 import org.datanucleus.metadata.RelationType;
-import org.datanucleus.state.ObjectProvider;
+import org.datanucleus.state.DNStateManager;
 import org.datanucleus.store.schema.table.MemberColumnMapping;
 import org.datanucleus.store.schema.table.SurrogateColumnType;
 import org.datanucleus.store.schema.table.Table;
@@ -55,7 +55,7 @@ public class ExcelUtils
      * @return The Work Sheet
      * @throws NucleusDataStoreException if the work sheet doesn't exist in this workbook
      */
-    public static Sheet getSheetForClass(ObjectProvider sm, Workbook wb, Table table)
+    public static Sheet getSheetForClass(DNStateManager sm, Workbook wb, Table table)
     {
         String sheetName = table.getName();
         final Sheet sheet = wb.getSheet(sheetName);
@@ -76,7 +76,7 @@ public class ExcelUtils
      * @param table The table representing this worksheet
      * @return The row number (or -1 if not found)
      */
-    public static int getRowNumberForObjectInWorkbook(ObjectProvider sm, Workbook wb, boolean originalValue, Table table)
+    public static int getRowNumberForObjectInWorkbook(DNStateManager sm, Workbook wb, boolean originalValue, Table table)
     {
         final AbstractClassMetaData cmd = sm.getClassMetaData();
         if (cmd.getIdentityType() == IdentityType.APPLICATION)
@@ -96,10 +96,10 @@ public class ExcelUtils
                 if (RelationType.isRelationSingleValued(relationType) && mmd.isEmbedded())
                 {
                     // Embedded PC is part of PK (e.g JPA EmbeddedId)
-                    ObjectProvider embSM = ec.findObjectProvider(fieldValue);
+                    DNStateManager embSM = ec.findStateManager(fieldValue);
                     if (embSM == null)
                     {
-                        embSM = ec.getNucleusContext().getObjectProviderFactory().newForEmbedded(ec, fieldValue, false, sm, pkFieldNumbers[i]);
+                        embSM = ec.getNucleusContext().getStateManagerFactory().newForEmbedded(ec, fieldValue, false, sm, pkFieldNumbers[i]);
                     }
                     AbstractClassMetaData embCmd = ec.getMetaDataManager().getMetaDataForClass(mmd.getType(), clr);
                     for (int j=0;j<embCmd.getNoOfManagedMembers();j++)
@@ -211,7 +211,7 @@ public class ExcelUtils
                 Object fieldValue = null;
                 if (originalValue)
                 {
-                    Object oldValue = sm.getAssociatedValue(ObjectProvider.ORIGINAL_FIELD_VALUE_KEY_PREFIX + fieldNumbers[i]);
+                    Object oldValue = sm.getAssociatedValue(DNStateManager.ORIGINAL_FIELD_VALUE_KEY_PREFIX + fieldNumbers[i]);
                     if (oldValue != null)
                     {
                         fieldValue = oldValue;
@@ -228,10 +228,10 @@ public class ExcelUtils
                 if (RelationType.isRelationSingleValued(relationType) && mmd.isEmbedded())
                 {
                     // Embedded PC is part of PK (e.g JPA EmbeddedId)
-                    ObjectProvider embSM = ec.findObjectProvider(fieldValue);
+                    DNStateManager embSM = ec.findStateManager(fieldValue);
                     if (embSM == null)
                     {
-                        embSM = ec.getNucleusContext().getObjectProviderFactory().newForEmbedded(ec, fieldValue, false, sm, fieldNumbers[i]);
+                        embSM = ec.getNucleusContext().getStateManagerFactory().newForEmbedded(ec, fieldValue, false, sm, fieldNumbers[i]);
                     }
                     AbstractClassMetaData embCmd = sm.getExecutionContext().getMetaDataManager().getMetaDataForClass(mmd.getType(), clr);
                     for (int j=0;j<embCmd.getNoOfManagedMembers();j++)
@@ -356,7 +356,7 @@ public class ExcelUtils
      * @param wb Workbook
      * @return Number of (active) rows (or 0 if no active rows)
      */
-    public static int getNumberOfRowsInSheetOfWorkbook(ObjectProvider sm, Workbook wb)
+    public static int getNumberOfRowsInSheetOfWorkbook(DNStateManager sm, Workbook wb)
     {
         int numRows = 0;
 

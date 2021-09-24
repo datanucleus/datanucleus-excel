@@ -37,7 +37,7 @@ import org.datanucleus.metadata.AbstractMemberMetaData;
 import org.datanucleus.metadata.IdentityType;
 import org.datanucleus.metadata.VersionMetaData;
 import org.datanucleus.metadata.VersionStrategy;
-import org.datanucleus.state.ObjectProvider;
+import org.datanucleus.state.DNStateManager;
 import org.datanucleus.store.AbstractPersistenceHandler;
 import org.datanucleus.store.StoreData;
 import org.datanucleus.store.StoreManager;
@@ -86,7 +86,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
      * Method to insert the object into the datastore.
      * @param sm StateManager of the object
      */
-    public void insertObject(final ObjectProvider sm)
+    public void insertObject(final DNStateManager sm)
     {
         // Check if read-only so update not permitted
         assertReadOnlyForUpdateOfObject(sm);
@@ -253,7 +253,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
      * @param sm StateManager for the object
      * @param fieldNumbers Absolute numbers of fields to be updated
      */
-    public void updateObject(final ObjectProvider sm, int[] fieldNumbers)
+    public void updateObject(final DNStateManager sm, int[] fieldNumbers)
     {
         // Check if read-only so update not permitted
         assertReadOnlyForUpdateOfObject(sm);
@@ -402,7 +402,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
      * @throws NucleusDataStoreException when an error occurs in the datastore communication
      * @throws NucleusOptimisticException thrown if version checking fails on an optimistic transaction for this object
      */
-    public void deleteObject(ObjectProvider sm)
+    public void deleteObject(DNStateManager sm)
     {
         // Check if read-only so update not permitted
         assertReadOnlyForUpdateOfObject(sm);
@@ -487,7 +487,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
      * @param fieldNumbers The numbers of the fields to be fetched.
      * @throws NucleusDataStoreException when an error occurs in the datastore communication
      */
-    public void fetchObject(final ObjectProvider sm, int[] fieldNumbers)
+    public void fetchObject(final DNStateManager sm, int[] fieldNumbers)
     {
         AbstractClassMetaData cmd = sm.getClassMetaData();
         if (NucleusLogger.PERSISTENCE.isDebugEnabled())
@@ -596,7 +596,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
      * Goes through the rows in the worksheet and finds a row with the required identity.
      * @param sm StateManager of object to locate
      */
-    public void locateObject(ObjectProvider sm)
+    public void locateObject(DNStateManager sm)
     {
         ExecutionContext ec = sm.getExecutionContext();
         ManagedConnection mconn = storeMgr.getConnectionManager().getConnection(ec);

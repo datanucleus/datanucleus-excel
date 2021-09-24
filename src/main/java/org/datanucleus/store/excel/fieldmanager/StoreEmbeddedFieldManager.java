@@ -28,7 +28,7 @@ import org.datanucleus.metadata.AbstractMemberMetaData;
 import org.datanucleus.metadata.EmbeddedMetaData;
 import org.datanucleus.metadata.MetaDataUtils;
 import org.datanucleus.metadata.RelationType;
-import org.datanucleus.state.ObjectProvider;
+import org.datanucleus.state.DNStateManager;
 import org.datanucleus.store.schema.table.MemberColumnMapping;
 import org.datanucleus.store.schema.table.Table;
 import org.datanucleus.util.NucleusLogger;
@@ -47,7 +47,7 @@ public class StoreEmbeddedFieldManager extends StoreFieldManager
         this.mmds = mmds;
     }
 
-    public StoreEmbeddedFieldManager(ObjectProvider sm, Row row, boolean insert, List<AbstractMemberMetaData> mmds, Table table)
+    public StoreEmbeddedFieldManager(DNStateManager sm, Row row, boolean insert, List<AbstractMemberMetaData> mmds, Table table)
     {
         super(sm, row, insert, table);
         this.mmds = mmds;
@@ -76,7 +76,7 @@ public class StoreEmbeddedFieldManager extends StoreFieldManager
             // Special case of this member being a link back to the owner. TODO Repeat this for nested and their owners
             if (sm != null)
             {
-                ObjectProvider[] ownerSMs = ec.getOwnersForEmbeddedObjectProvider(sm);
+                DNStateManager[] ownerSMs = ec.getOwnersForEmbeddedStateManager(sm);
                 if (ownerSMs != null && ownerSMs.length == 1 && value != ownerSMs[0].getObject())
                 {
                     // Make sure the owner field is set
@@ -97,14 +97,14 @@ public class StoreEmbeddedFieldManager extends StoreFieldManager
                 AbstractClassMetaData embcmd = ec.getMetaDataManager().getMetaDataForClass(embcls, clr);
                 if (embcmd != null)
                 {
-                    ObjectProvider embSM = null;
+                    DNStateManager embSM = null;
                     if (value != null)
                     {
-                        embSM = ec.findObjectProviderForEmbedded(value, sm, mmd);
+                        embSM = ec.findStateManagerForEmbedded(value, sm, mmd);
                     }
                     else
                     {
-                        embSM = ec.getNucleusContext().getObjectProviderFactory().newForEmbedded(ec, embcmd, sm, fieldNumber);
+                        embSM = ec.getNucleusContext().getStateManagerFactory().newForEmbedded(ec, embcmd, sm, fieldNumber);
                     }
 
                     List<AbstractMemberMetaData> embMmds = new ArrayList<AbstractMemberMetaData>(mmds);
