@@ -83,7 +83,6 @@ public class StoreFieldManager extends AbstractStoreFieldManager
         if (!sm.isEmbedded())
         {
             // Add PK field(s) cell, so that the row is detected by ExcelUtils.getNumberOfRowsInSheetOfWorkbook
-            AbstractClassMetaData cmd = sm.getClassMetaData();
             if (cmd.getIdentityType() == IdentityType.APPLICATION)
             {
                 int[] pkFieldNumbers = cmd.getPKMemberPositions();
@@ -222,7 +221,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
     public void storeObjectField(int fieldNumber, Object value)
     {
         ClassLoaderResolver clr = ec.getClassLoaderResolver();
-        AbstractMemberMetaData mmd = sm.getClassMetaData().getMetaDataForManagedMemberAtAbsolutePosition(fieldNumber);
+        AbstractMemberMetaData mmd = cmd.getMetaDataForManagedMemberAtAbsolutePosition(fieldNumber);
         if (!isStorable(mmd))
         {
             return;
