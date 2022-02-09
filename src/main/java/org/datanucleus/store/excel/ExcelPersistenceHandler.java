@@ -190,9 +190,9 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
             {
                 // versioned object so set its version
                 Cell verCell = null;
-                if (vermd.getFieldName() != null)
+                if (vermd.getMemberName() != null)
                 {
-                    AbstractMemberMetaData verMmd = cmd.getMetaDataForMember(vermd.getFieldName());
+                    AbstractMemberMetaData verMmd = cmd.getMetaDataForMember(vermd.getMemberName());
                     MemberColumnMapping mapping = table.getMemberColumnMappingForMember(verMmd);
                     verCell = row.getCell(mapping.getColumn(0).getPosition());
                     if (verCell == null)
@@ -293,10 +293,10 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
 
                 // Version object so calculate version to store with
                 nextVersion = ec.getLockManager().getNextVersion(vermd, currentVersion);
-                if (vermd.getFieldName() != null)
+                if (vermd.getMemberName() != null)
                 {
                     // Version field
-                    AbstractMemberMetaData verMmd = cmd.getMetaDataForMember(vermd.getFieldName());
+                    AbstractMemberMetaData verMmd = cmd.getMetaDataForMember(vermd.getMemberName());
                     if (verMmd.getType() == Integer.class || verMmd.getType() == int.class)
                     {
                         // Cater for Integer-based versions TODO Generalise this
@@ -358,9 +358,9 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                 }
 
                 Cell verCell = null;
-                if (vermd.getFieldName() != null)
+                if (vermd.getMemberName() != null)
                 {
-                    AbstractMemberMetaData verMmd = cmd.getMetaDataForMember(vermd.getFieldName());
+                    AbstractMemberMetaData verMmd = cmd.getMetaDataForMember(vermd.getMemberName());
                     MemberColumnMapping mapping = table.getMemberColumnMappingForMember(verMmd);
                     verCell = row.getCell(mapping.getColumn(0).getPosition());
                 }
@@ -550,7 +550,7 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
             {
                 // Object has no version set so update it from this fetch
                 long verColNo = -1;
-                if (vermd.getFieldName() == null)
+                if (vermd.getMemberName() == null)
                 {
                     // Surrogate version
                     verColNo = table.getSurrogateColumn(SurrogateColumnType.VERSION).getPosition();
@@ -558,16 +558,16 @@ public class ExcelPersistenceHandler extends AbstractPersistenceHandler
                 else
                 {
                     // Field-based version
-                    verColNo = table.getMemberColumnMappingForMember(cmd.getMetaDataForMember(vermd.getFieldName())).getColumn(0).getPosition();
+                    verColNo = table.getMemberColumnMappingForMember(cmd.getMetaDataForMember(vermd.getMemberName())).getColumn(0).getPosition();
                 }
 
                 Row row = sheet.getRow(rowNumber);
                 Cell cell = row.getCell((int)verColNo);
-                if (vermd.getVersionStrategy() == VersionStrategy.VERSION_NUMBER)
+                if (vermd.getStrategy() == VersionStrategy.VERSION_NUMBER)
                 {
                     sm.setVersion(Long.valueOf((long)cell.getNumericCellValue()));
                 }
-                else if (vermd.getVersionStrategy() == VersionStrategy.DATE_TIME)
+                else if (vermd.getStrategy() == VersionStrategy.DATE_TIME)
                 {
                     sm.setVersion(cell.getDateCellValue());
                 }
