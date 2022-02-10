@@ -62,6 +62,7 @@ public class FetchEmbeddedFieldManager extends FetchFieldManager
         return table.getMemberColumnMappingForEmbeddedMember(embMmds);
     }
 
+    @Override
     public Object fetchObjectField(int fieldNumber)
     {
         AbstractMemberMetaData mmd = cmd.getMetaDataForManagedMemberAtAbsolutePosition(fieldNumber);
@@ -97,6 +98,6 @@ public class FetchEmbeddedFieldManager extends FetchFieldManager
             return null; // Remove this when we support embedded
         }
 
-        return fetchObjectFieldInternal(fieldNumber, mmd, clr, relationType);
+        return fetchObjectFieldInternal(mmd, clr, relationType);
     }
 }
