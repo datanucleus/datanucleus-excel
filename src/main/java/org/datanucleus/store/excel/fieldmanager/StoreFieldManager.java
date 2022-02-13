@@ -277,7 +277,7 @@ public class StoreFieldManager extends AbstractStoreFieldManager
                     return;
                 }
 
-                DNStateManager embSM = ec.findStateManagerForEmbedded(value, sm, mmd);
+                DNStateManager embSM = ec.findStateManagerForEmbedded(value, sm, mmd, null);
                 StoreEmbeddedFieldManager storeEmbFM = new StoreEmbeddedFieldManager(embSM, row, insert, embMmds, table);
                 embSM.provideFields(embMmdPosns, storeEmbFM);
                 return;

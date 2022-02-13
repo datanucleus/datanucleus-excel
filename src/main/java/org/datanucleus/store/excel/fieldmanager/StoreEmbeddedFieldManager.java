@@ -100,11 +100,11 @@ public class StoreEmbeddedFieldManager extends StoreFieldManager
                     DNStateManager embSM = null;
                     if (value != null)
                     {
-                        embSM = ec.findStateManagerForEmbedded(value, sm, mmd);
+                        embSM = ec.findStateManagerForEmbedded(value, sm, mmd, null);
                     }
                     else
                     {
-                        embSM = ec.getNucleusContext().getStateManagerFactory().newForEmbedded(ec, embcmd, sm, fieldNumber);
+                        embSM = ec.getNucleusContext().getStateManagerFactory().newForEmbedded(ec, embcmd, sm, fieldNumber, null);
                     }
 
                     List<AbstractMemberMetaData> embMmds = new ArrayList<AbstractMemberMetaData>(mmds);
