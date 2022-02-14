@@ -27,6 +27,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.datanucleus.ClassLoaderResolver;
 import org.datanucleus.ExecutionContext;
+import org.datanucleus.PersistableObjectType;
 import org.datanucleus.exceptions.NucleusDataStoreException;
 import org.datanucleus.identity.IdentityUtils;
 import org.datanucleus.metadata.AbstractClassMetaData;
@@ -99,7 +100,7 @@ public class ExcelUtils
                     DNStateManager embSM = ec.findStateManager(fieldValue);
                     if (embSM == null)
                     {
-                        embSM = ec.getNucleusContext().getStateManagerFactory().newForEmbedded(ec, fieldValue, false, sm, pkFieldNumbers[i], null);
+                        embSM = ec.getNucleusContext().getStateManagerFactory().newForEmbedded(ec, fieldValue, false, sm, pkFieldNumbers[i], PersistableObjectType.EMBEDDED_PC);
                     }
                     AbstractClassMetaData embCmd = ec.getMetaDataManager().getMetaDataForClass(mmd.getType(), clr);
                     for (int j=0;j<embCmd.getNoOfManagedMembers();j++)
@@ -231,7 +232,7 @@ public class ExcelUtils
                     DNStateManager embSM = ec.findStateManager(fieldValue);
                     if (embSM == null)
                     {
-                        embSM = ec.getNucleusContext().getStateManagerFactory().newForEmbedded(ec, fieldValue, false, sm, fieldNumbers[i], null);
+                        embSM = ec.getNucleusContext().getStateManagerFactory().newForEmbedded(ec, fieldValue, false, sm, fieldNumbers[i], PersistableObjectType.EMBEDDED_PC);
                     }
                     AbstractClassMetaData embCmd = sm.getExecutionContext().getMetaDataManager().getMetaDataForClass(mmd.getType(), clr);
                     for (int j=0;j<embCmd.getNoOfManagedMembers();j++)

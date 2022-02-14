@@ -35,6 +35,7 @@ import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.datanucleus.ClassLoaderResolver;
 import org.datanucleus.ExecutionContext;
+import org.datanucleus.PersistableObjectType;
 import org.datanucleus.exceptions.NucleusDataStoreException;
 import org.datanucleus.exceptions.NucleusException;
 import org.datanucleus.exceptions.NucleusObjectNotFoundException;
@@ -200,7 +201,7 @@ public class FetchFieldManager extends AbstractFetchFieldManager
                 List<AbstractMemberMetaData> embMmds = new ArrayList<AbstractMemberMetaData>();
                 embMmds.add(mmd);
                 AbstractClassMetaData embCmd = ec.getMetaDataManager().getMetaDataForClass(mmd.getType(), clr);
-                DNStateManager embSM = ec.getNucleusContext().getStateManagerFactory().newForEmbedded(ec, embCmd, sm, fieldNumber, null);
+                DNStateManager embSM = ec.getNucleusContext().getStateManagerFactory().newForEmbedded(ec, embCmd, sm, fieldNumber, PersistableObjectType.EMBEDDED_PC);
                 FieldManager fetchEmbFM = new FetchEmbeddedFieldManager(embSM, sheet, rowNumber, embMmds, table);
                 embSM.replaceFields(embCmd.getAllMemberPositions(), fetchEmbFM);
                 return embSM.getObject();
