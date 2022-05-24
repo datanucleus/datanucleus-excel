@@ -25,6 +25,7 @@ import java.util.Map;
 
 import org.datanucleus.ExecutionContext;
 import org.datanucleus.exceptions.NucleusException;
+import org.datanucleus.metadata.QueryLanguage;
 import org.datanucleus.store.StoreManager;
 import org.datanucleus.store.connection.ManagedConnection;
 import org.datanucleus.store.query.AbstractJDOQLQuery;
@@ -89,7 +90,7 @@ public class JDOQLQuery extends AbstractJDOQLQuery
             long startTime = System.currentTimeMillis();
             if (NucleusLogger.QUERY.isDebugEnabled())
             {
-                NucleusLogger.QUERY.debug(Localiser.msg("021046", Query.LANGUAGE_JDOQL, getSingleStringQuery(), null));
+                NucleusLogger.QUERY.debug(Localiser.msg("021046", QueryLanguage.JDOQL.name(), getSingleStringQuery(), null));
             }
 
             List candidates = null;
@@ -109,7 +110,7 @@ public class JDOQLQuery extends AbstractJDOQLQuery
 
             if (NucleusLogger.QUERY.isDebugEnabled())
             {
-                NucleusLogger.QUERY.debug(Localiser.msg("021074", Query.LANGUAGE_JDOQL, "" + (System.currentTimeMillis() - startTime)));
+                NucleusLogger.QUERY.debug(Localiser.msg("021074", QueryLanguage.JDOQL.name(), "" + (System.currentTimeMillis() - startTime)));
             }
 
             if (type == QueryType.BULK_DELETE)
