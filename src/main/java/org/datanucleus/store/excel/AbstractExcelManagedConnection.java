@@ -28,6 +28,7 @@ import javax.transaction.xa.XAResource;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.datanucleus.exceptions.NucleusException;
 import org.datanucleus.store.connection.AbstractManagedConnection;
+import org.datanucleus.util.NucleusLogger;
 
 /**
  * Managed Connection for XLS or OOXML.
@@ -65,6 +66,7 @@ public abstract class AbstractExcelManagedConnection extends AbstractManagedConn
                 }
 
                 conn = getWorkbook(new FileInputStream(file));
+                NucleusLogger.CONNECTION.debug("ManagedConnection " + this.toString() + " is starting for file=" + file);
             }
             catch (IOException e)
             {
@@ -78,14 +80,14 @@ public abstract class AbstractExcelManagedConnection extends AbstractManagedConn
     {
         if (commitOnRelease)
         {
-            // Non-transactional operation end : Write to file and close connection
+            // Non-transactional operation end : Write to file
             try
             {
+                NucleusLogger.CONNECTION.debug("ManagedConnection " + this.toString() + " is committing");
                 FileOutputStream os = new FileOutputStream(file);
                 ((Workbook)conn).write(new FileOutputStream(file));
                 os.close();
-                file = null;
-                conn = null;
+                NucleusLogger.CONNECTION.debug("ManagedConnection " + this.toString() + " committed connection");
             }
             catch (IOException e)
             {
@@ -109,9 +111,14 @@ public abstract class AbstractExcelManagedConnection extends AbstractManagedConn
                 listeners.get(i).managedConnectionPreClose();
             }
 
+            // Commit any remaining changes
+            NucleusLogger.CONNECTION.debug("ManagedConnection " + this.toString() + " is committing");
             FileOutputStream os = new FileOutputStream(file);
             ((Workbook)conn).write(new FileOutputStream(file));
             os.close();
+            NucleusLogger.CONNECTION.debug("ManagedConnection " + this.toString() + " committed connection");
+
+            // Close the connection
             file = null;
             conn = null;
         }
