@@ -7,7 +7,7 @@
         <version>6.0.4</version>
     </parent>
 
-    <version>6.0.2-SNAPSHOT</version>
+    <version>6.0.2</version>
     <artifactId>datanucleus-excel</artifactId>
 
     <name>DataNucleus Excel plugin</name>
@@ -23,7 +23,8 @@
         <connection>scm:git:git@github.com:datanucleus/${project.artifactId}.git</connection>
         <developerConnection>scm:git:git@github.com:datanucleus/${project.artifactId}.git</developerConnection>
         <url>https://github.com/datanucleus/${project.artifactId}</url>
-    </scm>
+      <tag>datanucleus-excel-6.0.2</tag>
+  </scm>
 
     <build>
         <plugins>
